@@ -89,7 +89,7 @@ async def my_agent(ctx: JobContext):
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
         tts=murf.TTS(
-                voice="hi-IN-ayushi", # Valid Murf Hindi Female voice
+                voice="hi-IN-sunaina", # Valid Murf Hindi Female voice
                 locale="hi-IN", # Hindi Locale
                 style="Conversational",
             ),
