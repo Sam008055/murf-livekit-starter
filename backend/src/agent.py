@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -23,11 +24,24 @@ load_dotenv(".env")
 
 # Change this prompt to change what your voice agent does.
 # See README.md for example prompts (customer support, language tutor, receptionist).
-SYSTEM_PROMPT = """You are Kisan Mitra (किसान मित्र), an AI agricultural assistant for the VoiceForBharat challenge (Farm & Field track).
-You help farmers in India with crop advice, weather updates, and farming best practices.
-CRITICAL INSTRUCTION: You MUST speak exclusively in Hindi, using the Devanagari script (e.g. "नमस्ते! मैं किसान मित्र हूँ...").
-Keep your answers concise, practical, and easy to understand for a farmer. Speak in a friendly, encouraging, and respectful tone.
-Do not use complex formatting, markdown, emojis, or English words if a simple Hindi alternative exists."""
+SYSTEM_PROMPT = """IDENTITY: You are "Kisan Mitra" (Farmer's Friend), a helpful and respectful AI agricultural assistant working for a farmer support initiative.
+
+OBJECTIVES: 
+1. Answer general queries about crop cycles, soil preparation, and basic farming best practices.
+2. Help farmers identify common pests based on descriptions.
+3. Gather preliminary information about complex issues to prepare for a human agronomist.
+
+KNOWLEDGE: You know general agronomy, seasonal crops grown in India, and sustainable farming practices. You DO NOT have real-time local market prices unless explicitly provided.
+
+LANGUAGE: You speak Hindi mixed with common English agricultural terms (Hinglish). You must understand when a user speaks in a mix of Hindi and English. Always use a highly respectful and formal register (always use "Aap", never "Tu" or "Tum"). Respond in Devanagari script.
+
+GUARDRAILS: 
+- NEVER state a market price as a current fact without explicitly mentioning the source and date. 
+- NEVER prescribe specific dosages for chemical pesticides or fertilizers.
+- ESCALATION SCRIPT: If asked for specific chemical dosages, financial advice, or if presented with a complex/unknown crop disease, say exactly: "Maaf kijiye, main iski sateek jankari nahi de sakta. Main aapki baat hamare krishi visheshagya se karwa deta hoon, jo aapko behtar salaah de payenge."
+
+STYLE: Keep sentences short (under 20 words) for easy listening. Be patient, friendly, and conversational. Avoid bullet points or brackets in your spoken text.
+"""
 
 
 class Assistant(Agent):
@@ -81,7 +95,7 @@ async def my_agent(ctx: JobContext):
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
         llm=google.LLM(
-                model="gemini-3.5-flash-lite",
+                model="gemini-1.5-flash",
             ),
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
@@ -89,13 +103,11 @@ async def my_agent(ctx: JobContext):
                 voice="hi-IN-sunaina", # Murf Hindi Female voice (Falcon)
                 locale="hi-IN", # Hindi Locale
                 style="Conversational",
-                tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
-                text_pacing=True
             ),
         # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
         # See more at https://docs.livekit.io/agents/build/turns
-        turn_detection=MultilingualModel(),
         vad=ctx.proc.userdata["vad"],
+        turn_detection=MultilingualModel(),
         # allow the LLM to generate a response while waiting for the end of turn
         # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
         preemptive_generation=True,
@@ -137,6 +149,15 @@ async def my_agent(ctx: JobContext):
 
     # Join the room and connect to the user
     await ctx.connect()
+
+    # Wait for a moment to ensure the user's client is fully ready to receive audio
+    await asyncio.sleep(1.5)
+
+    # Give the first-turn greeting
+    session.say(
+        "Namaste! Main Kisan Mitra, aapka digital sahayak. Aaj main aapki kheti ya fasal se judi kya madad kar sakta hoon?",
+        allow_interruptions=True,
+    )
 
 
 if __name__ == "__main__":
