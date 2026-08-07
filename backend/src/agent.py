@@ -150,14 +150,23 @@ async def my_agent(ctx: JobContext):
     # Join the room and connect to the user
     await ctx.connect()
 
-    # Wait for a moment to ensure the user's client is fully ready to receive audio
-    await asyncio.sleep(1.5)
+    # Define a greeting function
+    async def greet():
+        # Wait for a moment to ensure the user's client is fully ready to receive audio
+        await asyncio.sleep(1.0)
+        session.say(
+            "Namaste! Main Kisan Mitra, aapka digital sahayak. Aaj main aapki kheti ya fasal se judi kya madad kar sakta hoon?",
+            allow_interruptions=True,
+        )
 
-    # Give the first-turn greeting
-    session.say(
-        "Namaste! Main Kisan Mitra, aapka digital sahayak. Aaj main aapki kheti ya fasal se judi kya madad kar sakta hoon?",
-        allow_interruptions=True,
-    )
+    # If the user is already in the room, greet them
+    if len(ctx.room.remote_participants) > 0:
+        asyncio.create_task(greet())
+    else:
+        # Otherwise wait for them to join
+        @ctx.room.on("participant_connected")
+        def on_participant_connected(participant: rtc.RemoteParticipant):
+            asyncio.create_task(greet())
 
 
 if __name__ == "__main__":
