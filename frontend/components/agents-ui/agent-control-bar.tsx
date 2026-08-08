@@ -21,24 +21,22 @@ import {
 import { cn } from '@/lib/shadcn/utils';
 
 const LK_TOGGLE_VARIANT_1 = [
-  'data-[state=off]:bg-accent data-[state=off]:hover:bg-foreground/10',
-  'data-[state=off]:[&_~_button]:bg-accent data-[state=off]:[&_~_button]:hover:bg-foreground/10',
-  'data-[state=off]:border-border data-[state=off]:hover:border-foreground/12',
-  'data-[state=off]:[&_~_button]:border-border data-[state=off]:[&_~_button]:hover:border-foreground/12',
+  'data-[state=off]:bg-destructive/10 data-[state=off]:hover:bg-destructive/20',
+  'data-[state=off]:[&_~_button]:bg-destructive/10 data-[state=off]:[&_~_button]:hover:bg-destructive/20',
+  'data-[state=off]:border-destructive/20 data-[state=off]:hover:border-destructive/30',
+  'data-[state=off]:[&_~_button]:border-destructive/20 data-[state=off]:[&_~_button]:hover:border-destructive/30',
   'data-[state=off]:text-destructive data-[state=off]:hover:text-destructive data-[state=off]:focus:text-destructive',
-  'data-[state=off]:focus-visible:ring-foreground/12 data-[state=off]:focus-visible:border-ring',
-  'dark:data-[state=off]:[&_~_button]:bg-accent dark:data-[state=off]:[&_~_button]:hover:bg-foreground/10',
+  'data-[state=off]:focus-visible:ring-destructive/20 data-[state=off]:focus-visible:border-destructive',
 ];
 
 const LK_TOGGLE_VARIANT_2 = [
-  'data-[state=off]:bg-accent data-[state=off]:hover:bg-foreground/10',
+  'data-[state=off]:bg-accent/10 data-[state=off]:hover:bg-accent/20',
   'data-[state=off]:border-border data-[state=off]:hover:border-foreground/12',
   'data-[state=off]:focus-visible:border-ring data-[state=off]:focus-visible:ring-foreground/12',
   'data-[state=off]:text-foreground data-[state=off]:hover:text-foreground data-[state=off]:focus:text-foreground',
-  'data-[state=on]:bg-blue-500/20 data-[state=on]:hover:bg-blue-500/30',
-  'data-[state=on]:border-blue-700/10 data-[state=on]:text-blue-700 data-[state=on]:ring-blue-700/30',
-  'data-[state=on]:focus-visible:border-blue-700/50',
-  'dark:data-[state=on]:bg-blue-500/20 dark:data-[state=on]:text-blue-300',
+  'data-[state=on]:bg-primary/20 data-[state=on]:hover:bg-primary/30',
+  'data-[state=on]:border-primary/20 data-[state=on]:text-primary data-[state=on]:ring-primary/30',
+  'data-[state=on]:focus-visible:border-primary/50',
 ];
 
 const MOTION_PROPS: MotionProps = {
@@ -288,8 +286,8 @@ export function AgentControlBar({
     <div
       aria-label="Voice assistant controls"
       className={cn(
-        'bg-background border-input/50 dark:border-muted flex flex-col border p-3 drop-shadow-md/3',
-        variant === 'livekit' ? 'rounded-[31px]' : 'rounded-lg',
+        'bg-card/80 backdrop-blur-md border-border/50 dark:border-border/50 flex flex-col border p-2 drop-shadow-xl shadow-primary/5',
+        variant === 'livekit' ? 'rounded-[32px]' : 'rounded-2xl',
         className
       )}
       {...props}

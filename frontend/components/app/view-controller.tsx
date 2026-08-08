@@ -3,9 +3,12 @@
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSessionContext } from '@livekit/components-react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
 import { WelcomeView } from '@/components/app/welcome-view';
+
+import { toast } from 'sonner';
 
 const MotionWelcomeView = motion.create(WelcomeView);
 const MotionSessionView = motion.create(AgentSessionView_01);
@@ -35,6 +38,28 @@ interface ViewControllerProps {
 export function ViewController({ appConfig }: ViewControllerProps) {
   const { isConnected, start } = useSessionContext();
   const { resolvedTheme } = useTheme();
+  const [hasEnded, setHasEnded] = useState(false);
+  const wasConnected = useRef(false);
+
+  useEffect(() => {
+    if (isConnected) {
+      wasConnected.current = true;
+      setHasEnded(false);
+    } else if (wasConnected.current) {
+      setHasEnded(true);
+      wasConnected.current = false;
+    }
+  }, [isConnected]);
+
+  const handleStartCall = async () => {
+    try {
+      await start();
+    } catch (e: any) {
+      toast.error('Failed to connect', {
+        description: e.message || 'Please check your microphone permissions and try again.',
+      });
+    }
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -43,8 +68,9 @@ export function ViewController({ appConfig }: ViewControllerProps) {
         <MotionWelcomeView
           key="welcome"
           {...VIEW_MOTION_PROPS}
-          startButtonText={appConfig.startButtonText}
-          onStartCall={start}
+          startButtonText={hasEnded ? 'Start Again' : appConfig.startButtonText}
+          onStartCall={handleStartCall}
+          hasEnded={hasEnded}
         />
       )}
       {/* Session view */}

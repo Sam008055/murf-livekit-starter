@@ -33,25 +33,25 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'Murf AI',
-  pageTitle: 'Voice Agent Starter',
-  pageDescription: 'A voice agent powered by Murf Falcon — the fastest TTS API',
+  companyName: 'Farm & Fields',
+  pageTitle: 'Khetify Voice Agent',
+  pageDescription: 'A premium agricultural voice agent for heritage farms',
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: true,
 
-  logo: '/murf-logo.svg',
-  accent: '#6366F1',
-  logoDark: '/murf-logo-dark.svg',
-  accentDark: '#818cf8',
+  logo: '/khetify-logo.png', // Generated Khetify logo
+  accent: '#2D5016', // Deep Forest Green
+  logoDark: '/khetify-logo.png',
+  accentDark: '#4A7C29',
   startButtonText: 'Start talking',
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',
-  // audioVisualizerColor: '#002cf2',
-  // audioVisualizerColorDark: '#1fd5f9',
+  audioVisualizerColor: '#2D5016',
+  audioVisualizerColorDark: '#4A7C29',
   // audioVisualizerColorShift: 0.3,
   // audioVisualizerBarCount: 5,
   // audioVisualizerType: 'radial',

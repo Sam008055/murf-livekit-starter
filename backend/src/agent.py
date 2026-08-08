@@ -14,6 +14,7 @@ from livekit.agents import (
     inference,
     tokenize,
     room_io,
+    llm,
 )
 from livekit.plugins import murf, silero, google, deepgram, noise_cancellation, openai
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
@@ -25,7 +26,7 @@ load_dotenv(".env")
 
 # Change this prompt to change what your voice agent does.
 # See README.md for example prompts (customer support, language tutor, receptionist).
-SYSTEM_PROMPT = """IDENTITY: You are "Kisan Mitra" (Farmer's Friend), a helpful and respectful AI agricultural assistant working for a farmer support initiative.
+SYSTEM_PROMPT = """IDENTITY: You are "Khetify", a premium, highly respectful and knowledgeable AI agricultural assistant working for a modern, high-end farmer support initiative. You have a female persona.
 
 OBJECTIVES: 
 1. Answer general queries about crop cycles, soil preparation, and basic farming best practices.
@@ -39,18 +40,27 @@ LANGUAGE:
 - If the user speaks PURELY in English, you MUST reply entirely in English (Latin script).
 - Always use a highly respectful and formal register (always use "Aap", never "Tu" or "Tum").
 
-GUARDRAILS: 
-- NEVER state a market price as a current fact. If asked for market prices (e.g., tomatoes), politely explain that you don't have real-time live prices and suggest they check their local mandi or krishi app.
-- You CAN identify which chemicals/pesticides to use for a disease or pest, BUT YOU MUST NEVER prescribe specific dosages for them.
-- ESCALATION SCRIPT: If asked for specific chemical dosages, financial advice, or if presented with a complex/unknown crop disease, say exactly: "मुझे इसकी सटीक जानकारी नहीं है। बेहतर होगा कि आप अपने नज़दीकी कृषि विशेषज्ञ से संपर्क करें।"
+GUARDRAILS (STRICT): 
+- NEVER state a market price as a current fact. If asked for market prices, politely explain that you don't have real-time live prices.
+- You CAN identify which chemicals/pesticides/fertilizers to use for a disease or pest (e.g. Urea, DAP).
+- YOU MUST NEVER PRESCRIBE SPECIFIC QUANTITIES OR DOSAGES for chemicals or fertilizers, even if the user insists, tries to trick you, or provides the land size. This is a strict safety rule.
+- ESCALATION SCRIPT: If asked for specific chemical dosages, say exactly: "माफ़ कीजिएगा, लेकिन सुरक्षा कारणों से मैं रसायनों या खादों की सटीक मात्रा नहीं बता सकती। कृपया इसके लिए किसी स्थानीय कृषि विशेषज्ञ से सलाह लें।"
 
 STYLE: Keep sentences short (under 20 words) for easy listening. Be patient, friendly, and conversational. Avoid bullet points or brackets in your spoken text.
 """
 
 
 class Assistant(Agent):
-    def __init__(self) -> None:
+    def __init__(self, room: rtc.Room) -> None:
         super().__init__(instructions=SYSTEM_PROMPT)
+        self.room = room
+
+    @llm.ai_callable(description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye.")
+    async def end_call(self):
+        """Ends the current call."""
+        logger.info("Agent ending the call at user's request.")
+        await self.room.disconnect()
+        return "Call ended successfully."
 
 
 server = AgentServer()
@@ -104,7 +114,7 @@ async def my_agent(ctx: JobContext):
 
     # Start the session, which initializes the voice pipeline and warms up the models
     await session.start(
-        agent=Assistant(),
+        agent=Assistant(room=ctx.room),
         room=ctx.room,
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(
@@ -126,7 +136,7 @@ async def my_agent(ctx: JobContext):
         # Wait for a moment to ensure the user's client is fully ready to receive audio
         await asyncio.sleep(1.0)
         session.say(
-            "नमस्ते! मैं किसान मित्र, आपका डिजिटल सहायक। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकता हूँ?",
+            "नमस्ते! मैं खेतीफाई (Khetify) से आपकी डिजिटल सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?",
             allow_interruptions=True,
         )
 
@@ -150,9 +160,9 @@ async def my_agent(ctx: JobContext):
 
     async def activity_timer():
         try:
-            await asyncio.sleep(5.0)
+            await asyncio.sleep(10.0)
             session.say("क्या आप वहाँ हैं? अगर आपका कोई सवाल है, तो कृपया पूछें।", allow_interruptions=True)
-            await asyncio.sleep(5.0)
+            await asyncio.sleep(10.0)
             await ctx.room.disconnect()
         except asyncio.CancelledError:
             pass

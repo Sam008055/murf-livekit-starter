@@ -1,4 +1,4 @@
-import { Public_Sans } from 'next/font/google';
+import { Playfair_Display, DM_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import { ThemeProvider } from '@/components/app/theme-provider';
@@ -7,8 +7,13 @@ import { cn } from '@/lib/shadcn/utils';
 import { getAppConfig, getStyles } from '@/lib/utils';
 import '@/styles/globals.css';
 
-const publicSans = Public_Sans({
-  variable: '--font-public-sans',
+const playfair = Playfair_Display({
+  variable: '--font-playfair',
+  subsets: ['latin'],
+});
+
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
   subsets: ['latin'],
 });
 
@@ -54,7 +59,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       lang="en"
       suppressHydrationWarning
       className={cn(
-        publicSans.variable,
+        playfair.variable,
+        dmSans.variable,
         commitMono.variable,
         'scroll-smooth font-sans antialiased'
       )}
@@ -71,32 +77,24 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <header className="fixed top-0 left-0 z-50 hidden w-full flex-row justify-between p-6 md:flex">
+          <header className="fixed top-0 left-0 z-50 w-full flex flex-row justify-between p-6 items-center pointer-events-none">
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href="https://livekit.io"
-              className="scale-100 transition-transform duration-300 hover:scale-110"
+              href="#"
+              className="scale-100 transition-transform duration-300 hover:scale-105 pointer-events-auto"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo} alt={`${companyName} Logo`} className="block size-6 dark:hidden" />
+              <img src={logo} alt={`${companyName} Logo`} className="block h-10 w-auto rounded-md shadow-sm border border-border/50 bg-background/50 backdrop-blur-sm p-1 dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoDark ?? logo}
                 alt={`${companyName} Logo`}
-                className="hidden size-6 dark:block"
+                className="hidden h-10 w-auto rounded-md shadow-sm border border-border/50 bg-background/50 backdrop-blur-sm p-1 dark:block"
               />
             </a>
             <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
-              Built with{' '}
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://docs.livekit.io/agents"
-                className="underline underline-offset-4"
-              >
-                LiveKit Agents
-              </a>
+              Farm & Fields
             </span>
           </header>
 

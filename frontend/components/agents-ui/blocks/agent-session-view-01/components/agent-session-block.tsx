@@ -12,6 +12,33 @@ import { Shimmer } from '@/components/ai-elements/shimmer';
 import { cn } from '@/lib/shadcn/utils';
 import { TileLayout } from './tile-view';
 
+function AgentStateIndicator({ state }: { state: string }) {
+  let label = 'Connecting...';
+  let dotClass = 'bg-yellow-500 animate-pulse';
+
+  switch (state) {
+    case 'listening':
+      label = 'Listening...';
+      dotClass = 'bg-blue-500 animate-pulse';
+      break;
+    case 'speaking':
+      label = 'Speaking...';
+      dotClass = 'bg-green-500 animate-pulse';
+      break;
+    case 'thinking':
+      label = 'Thinking...';
+      dotClass = 'bg-purple-500 animate-pulse';
+      break;
+  }
+
+  return (
+    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black/20 backdrop-blur-md px-4 py-1.5 text-sm font-medium text-white shadow-sm border border-white/10 flex items-center gap-2">
+      <div className={cn("w-2 h-2 rounded-full", dotClass)} />
+      {label}
+    </div>
+  );
+}
+
 const MotionMessage = motion.create(Shimmer);
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -205,6 +232,7 @@ export function AgentSessionView_01({
       {...props}
     >
       <Fade top className="absolute inset-x-4 top-0 z-10 h-40" />
+      <AgentStateIndicator state={agentState} />
       {/* transcript */}
 
       <div className="absolute top-0 bottom-[135px] flex w-full flex-col md:bottom-[170px]">
