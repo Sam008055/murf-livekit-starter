@@ -55,7 +55,7 @@ class Assistant(Agent):
         super().__init__(instructions=SYSTEM_PROMPT)
         self.room = room
 
-    @llm.ai_callable(description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye.")
+    @llm.function_tool(description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye.")
     async def end_call(self):
         """Ends the current call."""
         logger.info("Agent ending the call at user's request.")
