@@ -88,7 +88,7 @@ async def my_agent(ctx: JobContext):
         # See all available models at https://docs.livekit.io/agents/models/stt/
         stt=deepgram.STT(
             model="nova-3",
-            language="hi" # Configured for Hindi Speech-to-Text
+            detect_language=True,
         ),
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
