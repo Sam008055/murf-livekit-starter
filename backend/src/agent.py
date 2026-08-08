@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -13,13 +14,14 @@ from livekit.agents import (
     llm,
     room_io,
 )
-from livekit.plugins import deepgram, google, murf, noise_cancellation, silero
+from livekit.plugins import deepgram, murf, noise_cancellation, openai, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 logger = logging.getLogger("agent")
 
 load_dotenv(".env.local")
 load_dotenv(".env")
+
 
 # Change this prompt to change what your voice agent does.
 # See README.md for example prompts (customer support, language tutor, receptionist).
@@ -93,8 +95,10 @@ async def my_agent(ctx: JobContext):
         ),
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
-        llm=google.LLM(
-            model="gemini-2.0-flash",
+        llm=openai.LLM(
+            model="llama-3.3-70b-versatile",
+            base_url="https://api.groq.com/openai/v1",
+            api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
         ),
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
