@@ -56,7 +56,7 @@ class Assistant(Agent):
         self.room = room
 
     @llm.function_tool(description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye.")
-    async def end_call(self):
+    async def end_call(self, reason: str):
         """Ends the current call."""
         logger.info("Agent ending the call at user's request.")
         await self.room.disconnect()
