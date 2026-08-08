@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
+import Spline from '@splinetool/react-spline';
 
 interface WelcomeViewProps {
   startButtonText: string;
@@ -23,9 +24,14 @@ export const WelcomeView = ({
 
   return (
     <div ref={ref} className="relative w-full bg-background text-foreground min-h-[150vh]">
+      {/* 3D Spline Background */}
+      <div className="fixed inset-0 z-0">
+        <Spline scene="https://prod.spline.design/q6LzVjY0YtYmC6b2/scene.splinecode" />
+      </div>
+
       {/* Decorative background elements */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-      <div className="fixed top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none"></div>
+      <div className="fixed inset-0 opacity-20 pointer-events-none z-0" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
+      <div className="fixed top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0"></div>
       
       {/* Hero Section */}
       <motion.div 
