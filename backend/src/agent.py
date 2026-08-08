@@ -151,19 +151,25 @@ async def my_agent(ctx: JobContext):
 
     # --- Silence Handling ---
     activity_task = None
+    silence_count = 0
     
     def reset_activity_timer():
         nonlocal activity_task
         if activity_task:
             activity_task.cancel()
-        activity_task = asyncio.create_task(activity_timer())
+        if session.agent_state != "speaking":
+            activity_task = asyncio.create_task(activity_timer())
 
     async def activity_timer():
+        nonlocal silence_count
         try:
             await asyncio.sleep(10.0)
-            session.say("क्या आप वहाँ हैं? अगर आपका कोई सवाल है, तो कृपया पूछें।", allow_interruptions=True)
-            await asyncio.sleep(10.0)
-            await ctx.room.disconnect()
+            silence_count += 1
+            if silence_count >= 2:
+                logger.info("Disconnecting due to prolonged silence.")
+                await ctx.room.disconnect()
+            else:
+                session.say("क्या आप वहाँ हैं? अगर आपका कोई सवाल है, तो कृपया पूछें।", allow_interruptions=True)
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -171,8 +177,10 @@ async def my_agent(ctx: JobContext):
 
     @session.on("user_state_changed")
     def on_user_state(ev):
+        nonlocal silence_count
         new_state = getattr(ev, "new_state", None)
         if new_state == "speaking":
+            silence_count = 0
             if activity_task:
                 activity_task.cancel()
         else:
