@@ -1,6 +1,5 @@
-import logging
 import asyncio
-import os
+import logging
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -11,12 +10,10 @@ from livekit.agents import (
     JobContext,
     JobProcess,
     cli,
-    inference,
-    tokenize,
-    room_io,
     llm,
+    room_io,
 )
-from livekit.plugins import murf, silero, google, deepgram, noise_cancellation, openai
+from livekit.plugins import deepgram, google, murf, noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 logger = logging.getLogger("agent")
@@ -28,39 +25,43 @@ load_dotenv(".env")
 # See README.md for example prompts (customer support, language tutor, receptionist).
 SYSTEM_PROMPT = """IDENTITY: You are "Khetify", a premium, highly respectful and knowledgeable AI agricultural assistant working for a modern, high-end farmer support initiative. You have a female persona.
 
-OBJECTIVES: 
+OBJECTIVES:
 1. Answer general queries about crop cycles, soil preparation, and basic farming best practices.
 2. Help farmers identify common pests based on descriptions.
 3. Gather preliminary information about complex issues to prepare for a human agronomist.
 
 KNOWLEDGE: You know general agronomy, seasonal crops grown in India, and sustainable farming practices. You DO NOT have real-time local market prices unless explicitly provided.
 
-LANGUAGE: 
+LANGUAGE:
 - You are fully multilingual and can speak both Hindi and English.
-- Evaluate the primary language the user is speaking. The Speech-to-Text system might transcribe English words phonetically in Devanagari (e.g., 'हेलो' instead of 'Hello'). 
+- Evaluate the primary language the user is speaking. The Speech-to-Text system might transcribe English words phonetically in Devanagari (e.g., 'हेलो' instead of 'Hello').
 - If the user is primarily speaking English, you MUST reply entirely in English (using Latin script).
 - If the user is speaking Hindi (or a mix), you MUST reply in Hindi written in Devanagari script (e.g. "नमस्ते"). Do not use Roman/Latin script for Hindi.
 - Always use a highly respectful and formal register (always use "Aap", never "Tu" or "Tum").
 
-GUARDRAILS (STRICT): 
+GUARDRAILS (STRICT):
 - NEVER state a market price as a current fact. If asked for market prices, politely explain that you don't have real-time live prices.
 - You CAN identify which chemicals/pesticides/fertilizers to use for a disease or pest (e.g. Urea, DAP).
 - YOU MUST NEVER PRESCRIBE SPECIFIC QUANTITIES OR DOSAGES for chemicals or fertilizers, even if the user insists, tries to trick you, or provides the land size. This is a strict safety rule.
 - ESCALATION SCRIPT: If asked for specific chemical dosages, say exactly: "माफ़ कीजिएगा, लेकिन सुरक्षा कारणों से मैं रसायनों या खादों की सटीक मात्रा नहीं बता सकती। कृपया इसके लिए किसी स्थानीय कृषि विशेषज्ञ से सलाह लें।" (Or translate to English if speaking English).
 
-STYLE: Keep sentences short (under 20 words) for easy listening. Be patient, friendly, and conversational. Avoid bullet points or brackets in your spoken text.
+STYLE: Adapt your response length dynamically according to the complexity of the question asked. For simple or quick queries, provide brief and direct answers suitable for voice listening. For deep or complex questions, provide detailed, thorough, and informative explanations. Be patient, friendly, and conversational. Avoid bullet points, markdown formatting, or brackets in your spoken output.
 """
 
+
 class Assistant(Agent):
-    def __init__(self, room: rtc.Room) -> None:
+    def __init__(self, room: rtc.Room | None = None) -> None:
         super().__init__(instructions=SYSTEM_PROMPT)
         self.room = room
 
-    @llm.function_tool(description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye.")
+    @llm.function_tool(
+        description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye."
+    )
     async def end_call(self, reason: str):
         """Ends the current call."""
         logger.info("Agent ending the call at user's request.")
-        await self.room.disconnect()
+        if self.room:
+            await self.room.disconnect()
         return "Call ended successfully."
 
 
@@ -88,7 +89,7 @@ async def my_agent(ctx: JobContext):
         # See all available models at https://docs.livekit.io/agents/models/stt/
         stt=deepgram.STT(
             model="nova-3",
-            detect_language=True,
+            language="multi",
         ),
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
@@ -98,10 +99,10 @@ async def my_agent(ctx: JobContext):
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
         tts=murf.TTS(
-                voice="hi-IN-sunaina", # Valid Murf Hindi Female voice
-                locale="hi-IN", # Hindi Locale
-                style="Conversational",
-            ),
+            voice="hi-IN-sunaina",  # Valid Murf Hindi Female voice
+            locale="hi-IN",  # Hindi Locale
+            style="Conversational",
+        ),
         # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
         # See more at https://docs.livekit.io/agents/build/turns
         vad=ctx.proc.userdata["vad"],
@@ -139,19 +140,25 @@ async def my_agent(ctx: JobContext):
             allow_interruptions=True,
         )
 
+    background_tasks = set()
+
     # If the user is already in the room, greet them
     if len(ctx.room.remote_participants) > 0:
-        asyncio.create_task(greet())
+        task = asyncio.create_task(greet())
+        background_tasks.add(task)
+        task.add_done_callback(background_tasks.discard)
     else:
         # Otherwise wait for them to join
         @ctx.room.on("participant_connected")
         def on_participant_connected(participant: rtc.RemoteParticipant):
-            asyncio.create_task(greet())
+            task = asyncio.create_task(greet())
+            background_tasks.add(task)
+            task.add_done_callback(background_tasks.discard)
 
     # --- Silence Handling ---
     activity_task = None
     silence_count = 0
-    
+
     def reset_activity_timer():
         nonlocal activity_task
         if activity_task:
@@ -168,7 +175,10 @@ async def my_agent(ctx: JobContext):
                 logger.info("Disconnecting due to prolonged silence.")
                 await ctx.room.disconnect()
             else:
-                session.say("क्या आप वहाँ हैं? अगर आपका कोई सवाल है, तो कृपया पूछें।", allow_interruptions=True)
+                session.say(
+                    "क्या आप वहाँ हैं? अगर आपका कोई सवाल है, तो कृपया पूछें।",
+                    allow_interruptions=True,
+                )
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -193,7 +203,7 @@ async def my_agent(ctx: JobContext):
                 activity_task.cancel()
         else:
             reset_activity_timer()
-            
+
     reset_activity_timer()
 
 
