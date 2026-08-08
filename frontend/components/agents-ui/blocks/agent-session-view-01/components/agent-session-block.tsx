@@ -32,7 +32,7 @@ function AgentStateIndicator({ state }: { state: string }) {
   }
 
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black/20 backdrop-blur-md px-4 py-1.5 text-sm font-medium text-white shadow-sm border border-white/10 flex items-center gap-2">
+    <div className="mx-auto flex w-full max-w-2xl items-center justify-center gap-2 pb-4 text-sm font-semibold text-primary/80">
       <div className={cn("w-2 h-2 rounded-full", dotClass)} />
       {label}
     </div>
@@ -232,7 +232,6 @@ export function AgentSessionView_01({
       {...props}
     >
       <Fade top className="absolute inset-x-4 top-0 z-10 h-40" />
-      <AgentStateIndicator state={agentState} />
       {/* transcript */}
 
       <div className="absolute top-0 bottom-[135px] flex w-full flex-col md:bottom-[170px]">
@@ -270,21 +269,16 @@ export function AgentSessionView_01({
         className="absolute inset-x-3 bottom-0 z-50 md:inset-x-12"
       >
         {/* Pre-connect message */}
-        {isPreConnectBufferEnabled && (
-          <AnimatePresence>
-            {messages.length === 0 && (
-              <MotionMessage
-                key="pre-connect-message"
-                duration={2}
-                aria-hidden={messages.length > 0}
-                {...SHIMMER_MOTION_PROPS}
-                className="pointer-events-none mx-auto block w-full max-w-2xl pb-4 text-center text-sm font-semibold"
-              >
-                {preConnectMessage}
-              </MotionMessage>
-            )}
-          </AnimatePresence>
-        )}
+        {/* Agent State Indicator at the bottom */}
+        <AnimatePresence>
+          <motion.div
+            key="agent-state-indicator"
+            {...SHIMMER_MOTION_PROPS}
+            className="pointer-events-none mx-auto block w-full max-w-2xl"
+          >
+            <AgentStateIndicator state={agentState} />
+          </motion.div>
+        </AnimatePresence>
         <div className="bg-background relative mx-auto max-w-2xl pb-3 md:pb-12">
           <Fade bottom className="absolute inset-x-0 top-0 h-4 -translate-y-full" />
           <AgentControlBar
