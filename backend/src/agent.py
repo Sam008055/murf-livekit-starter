@@ -120,7 +120,7 @@ class Assistant(Agent):
     @llm.function_tool(
         description="Retrieve saved memory and profile details for the connected farmer (such as crop types, land size, district/location, irrigation type)."
     )
-    async def get_farmer_memory(self) -> str:
+    async def get_farmer_memory(self, query: str = "profile") -> str:
         """Retrieve stored facts and profile for the connected farmer."""
         fid = self.current_farmer_id
         profile = db.get_farmer(fid)
@@ -129,17 +129,19 @@ class Assistant(Agent):
     @llm.function_tool(
         description="Save or update a specific fact about the farmer to their permanent database profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'; key='irrigation', value='Drip')."
     )
-    async def save_farmer_fact(self, key: str, value: str) -> str:
+    async def save_farmer_fact(
+        self, key: str, value: str, farmer_name: str | None = None
+    ) -> str:
         """Save a new fact about the farmer."""
         fid = self.current_farmer_id
-        db.save_farmer_fact(fid, key=key, value=value)
+        db.save_farmer_fact(fid, name=farmer_name, key=key, value=value)
         logger.info(f"Saved farmer fact for {fid}: {key}={value}")
         return f"Successfully saved fact '{key}: {value}' to farmer profile memory."
 
     @llm.function_tool(
         description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye."
     )
-    async def end_call(self, reason: str = "User requested call end") -> str:
+    async def end_call(self, reason: str) -> str:
         """Ends the current call."""
         logger.info("Agent ending the call at user's request.")
         if self.room:
@@ -163,15 +165,14 @@ async def my_agent(ctx: JobContext):
         "room": ctx.room.name,
     }
 
-    # Set up voice AI pipeline using Murf Falcon, Groq LLM (llama-3.1-8b-instant with high TPD quota), Deepgram, and LiveKit turn detector
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    # Set up voice AI pipeline using Murf Falcon, Gemini / Groq LLM, Deepgram, and LiveKit turn detector
     session = AgentSession(
         stt=deepgram.STT(
             model="nova-3",
             language="multi",
         ),
         llm=openai.LLM(
-            model=groq_model,
+            model="llama-3.3-70b-versatile",
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
             _strict_tool_schema=False,
