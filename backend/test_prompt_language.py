@@ -55,7 +55,7 @@ STYLE:
 
 async def test_language_detection():
     groq_llm = openai.LLM(
-        model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+        model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
         base_url="https://api.groq.com/openai/v1",
         api_key=os.getenv("GROQ_API_KEY"),
     )
@@ -79,6 +79,7 @@ async def test_language_detection():
             if chunk.delta and chunk.delta.content:
                 print(chunk.delta.content, end="", flush=True)
         print()
+        await asyncio.sleep(2)
 
 
 if __name__ == "__main__":

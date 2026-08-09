@@ -43,6 +43,7 @@ OBJECTIVES:
 KNOWLEDGE & RAG TOOL (STRICT & MANDATORY):
 - You have access to `search_agricultural_knowledge(query)` to search indexed official agricultural documents (ICAR guidelines, PM-Kisan, KCC schemes, crop practices, soil prep, pest/disease control).
 - MANDATORY RAG RULE: Whenever the user asks ANY question about farming, crops, soil, fertilizers, pests, diseases, government schemes, or agricultural management, YOU MUST ALWAYS CALL `search_agricultural_knowledge(query)` FIRST before formulating your answer. Ground your answer heavily and directly on the retrieved search results. Do NOT make up information or rely solely on general knowledge when official document context is available.
+- RAG LANGUAGE TRANSLATION RULE: The retrieved search results may contain text in Hindi or English. YOU MUST ALWAYS RESPOND IN THE USER'S DETECTED LANGUAGE, NOT THE LANGUAGE OF THE RETRIEVED TEXT. If the user spoke in English (e.g. "Can you tell me more benefits..."), you MUST translate and present the retrieved RAG facts 100% in English. If the user spoke in Hindi, present the facts 100% in Hindi.
 
 MEMORY & FARMER FACTS TOOL:
 - You have access to `save_farmer_fact(key, value)` to persist facts in the farmer's profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'). Call this tool whenever the farmer reveals new details about their farm.
@@ -172,7 +173,7 @@ async def my_agent(ctx: JobContext):
             language="multi",
         ),
         llm=openai.LLM(
-            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
             _strict_tool_schema=False,

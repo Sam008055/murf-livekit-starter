@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-from pathlib import Path
+
 from dotenv import load_dotenv
 
 sys.path.append("src")
@@ -9,29 +9,32 @@ sys.path.append("src")
 load_dotenv(".env.local")
 load_dotenv(".env")
 
-from livekit.plugins import openai
-from livekit.agents import llm
-from agent import Assistant
+from livekit.agents import llm  # noqa: E402
+from livekit.plugins import openai  # noqa: E402
 
-async def test(strict: bool):
+from agent import Assistant  # noqa: E402
+
+
+async def run_groq_tools_test(strict: bool):
     print(f"\n================ Testing _strict_tool_schema={strict} ================")
-    tools = [m.__get__(object()) for m in Assistant.__dict__.values() if isinstance(m, llm.FunctionTool)]
-    
-    l = openai.LLM(
-        model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+    tools = [
+        m.__get__(object())
+        for m in Assistant.__dict__.values()
+        if isinstance(m, llm.FunctionTool)
+    ]
+
+    groq_llm = openai.LLM(
+        model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
         base_url="https://api.groq.com/openai/v1",
         api_key=os.getenv("GROQ_API_KEY"),
         _strict_tool_schema=strict,
     )
-    
+
     ctx = llm.ChatContext()
-    ctx.add_message(
-        role="user",
-        content="कैन यू टेल मी हाउ टू कंट्रोल व्हीट रस्ट?"
-    )
-    
+    ctx.add_message(role="user", content="कैन यू टेल मी हाउ टू कंट्रोल व्हीट रस्ट?")
+
     try:
-        stream = l.chat(chat_ctx=ctx, tools=tools)
+        stream = groq_llm.chat(chat_ctx=ctx, tools=tools)
         async for chunk in stream:
             if chunk.delta:
                 if chunk.delta.content:
@@ -42,9 +45,11 @@ async def test(strict: bool):
     except Exception as e:
         print("\nERROR:", type(e), e)
 
+
 async def main():
-    await test(True)
-    await test(False)
+    await run_groq_tools_test(True)
+    await run_groq_tools_test(False)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
