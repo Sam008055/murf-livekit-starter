@@ -76,6 +76,7 @@ def search_knowledge_base(query: str, top_k: int = 2) -> str:
 
     # Sort descending by score
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
+    top_k = min(1, len(scored_chunks))
     top_matches = scored_chunks[:top_k]
 
     results = []
@@ -83,8 +84,8 @@ def search_knowledge_base(query: str, top_k: int = 2) -> str:
         if score > 0.05:
             clean_doc = doc_name.replace(".pdf", "").replace("_", " ")
             chunk_content = content.strip()
-            if len(chunk_content) > 700:
-                chunk_content = chunk_content[:700] + "..."
+            if len(chunk_content) > 350:
+                chunk_content = chunk_content[:350] + "..."
             results.append(f"[{clean_doc} - Page {page_num}]\n{chunk_content}")
 
     if not results:
