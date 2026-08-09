@@ -25,7 +25,7 @@ def cosine_similarity(vec1, vec2):
     return float(dot / (norm1 * norm2))
 
 
-def search_knowledge_base(query: str, top_k: int = 3) -> str:
+def search_knowledge_base(query: str, top_k: int = 2) -> str:
     """
     Search agricultural knowledge base (PDFs on crops, schemes, soil, pest management, KCC, PM-Kisan, etc.)
     using hybrid vector + text similarity.

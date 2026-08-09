@@ -169,7 +169,7 @@ async def my_agent(ctx: JobContext):
     }
 
     groq_key = os.getenv("GROQ_API_KEY") or ""
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     key_suffix = f"...{groq_key[-4:]}" if len(groq_key) >= 4 else "NOT SET"
     logger.info(
         f"Starting agent for room '{ctx.room.name}' using Groq model '{groq_model}' and API key ending in {key_suffix}"
@@ -182,7 +182,7 @@ async def my_agent(ctx: JobContext):
             language="multi",
         ),
         llm=openai.LLM(
-            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
             _strict_tool_schema=False,
