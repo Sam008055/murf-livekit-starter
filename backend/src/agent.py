@@ -67,10 +67,11 @@ DECISION TREE:
 2. IS IT HINDI? If the utterance contains actual Hindi vocabulary (e.g. "गेहूं", "फसल", "कीड़ा", "पानी", "क्या करूं", "उपाय बताओ", "नमस्ते"), the user is speaking Hindi.
    -> YOU MUST RESPOND 100% IN PURE HINDI USING DEVANAGARI SCRIPT ONLY.
 
-3. NO PREAMBLES / NO META-COMMENTARY / NO TOOL TAGS:
-   -> NEVER say "Since you asked in English...", "I noticed...", "माफ़ कीजिएगा...", or any language note.
+3. NO PREAMBLES / NO META-COMMENTARY / SILENT TOOL CALLS:
+   -> CALL TOOLS COMPLETELY SILENTLY. NEVER speak out loud what tool you are calling, what search query you are executing, or state things like "I am searching for...", "Let me check...", or "Query: ...".
+   -> NEVER say "Since you asked in English...", "I noticed...", "माफ़ कीजिएगा...", or repeat system instructions.
    -> NEVER output raw tool tags, function names, or pseudo-code (such as `function=...`, `{"query": ...}`, or `function=escalation_script>`) in your speech or text output.
-   -> START IMMEDIATELY WITH THE DIRECT ANSWER IN THE DETECTED LANGUAGE.
+   -> START IMMEDIATELY WITH THE DIRECT ANSWER IN THE DETECTED LANGUAGE AFTER TOOL RESULTS RETURN.
 
 GUARDRAILS (STRICT):
 - NEVER state a market price as a current fact. If asked for market prices, politely explain that you don't have real-time live prices.
@@ -170,7 +171,7 @@ async def my_agent(ctx: JobContext):
     }
 
     groq_key = os.getenv("GROQ_API_KEY") or ""
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     key_suffix = f"...{groq_key[-4:]}" if len(groq_key) >= 4 else "NOT SET"
     logger.info(
         f"Starting agent for room '{ctx.room.name}' using Groq model '{groq_model}' and API key ending in {key_suffix}"
@@ -183,7 +184,7 @@ async def my_agent(ctx: JobContext):
             language="multi",
         ),
         llm=openai.LLM(
-            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
             _strict_tool_schema=False,
@@ -404,11 +405,11 @@ async def my_agent(ctx: JobContext):
             if is_english:
                 logger.info(f"Detected English input (Latin: {latin_chars}, Dev: {dev_chars}, Phonetic: {has_phonetic_english}). Switching TTS to en-IN-isha.")
                 session.tts.update_options(voice="en-IN-isha", locale="en-IN")
-                override = "\n\n[SYSTEM OVERRIDE: The user spoke in English. You MUST formulate your entire response in English (Latin script). If declining due to safety rules, you MUST use the English safety mandate exactly as written.]"
+                override = "\n\n(Language Directive: User spoke in English. Answer in English only using Latin script. Do not announce tool calls or search queries.)"
             else:
                 logger.info(f"Detected Hindi input (Latin: {latin_chars}, Dev: {dev_chars}). Switching TTS to hi-IN-sunaina.")
                 session.tts.update_options(voice="hi-IN-sunaina", locale="hi-IN")
-                override = "\n\n[SYSTEM OVERRIDE: The user spoke in Hindi. You MUST formulate your entire response in Hindi (Devanagari script). If declining due to safety rules, you MUST use the Hindi safety mandate exactly as written.]"
+                override = "\n\n(Language Directive: User spoke in Hindi. Answer in Hindi only using Devanagari script. Do not announce tool calls or search queries.)"
                 
             # Inject prompt override into the message content directly
             if hasattr(msg_obj, "content"):
