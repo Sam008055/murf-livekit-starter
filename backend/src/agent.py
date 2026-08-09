@@ -26,10 +26,11 @@ sys.path.append(str(Path(__file__).parent))
 import db
 import rag
 
-logger = logging.getLogger("agent")
+# Ensure latest environment variables from .env.local / .env override cached environment
+load_dotenv(".env.local", override=True)
+load_dotenv(".env", override=True)
 
-load_dotenv(".env.local")
-load_dotenv(".env")
+logger = logging.getLogger("agent")
 
 
 # Khetify System Prompt with RAG & Memory tool guidance
@@ -166,6 +167,12 @@ async def my_agent(ctx: JobContext):
     ctx.log_context_fields = {
         "room": ctx.room.name,
     }
+
+    groq_key = os.getenv("GROQ_API_KEY") or ""
+    key_suffix = f"...{groq_key[-4:]}" if len(groq_key) >= 4 else "NOT SET"
+    logger.info(
+        f"Starting agent for room '{ctx.room.name}' using Groq API key ending in {key_suffix}"
+    )
 
     # Set up voice AI pipeline using Murf Falcon, Gemini / Groq LLM, Deepgram, and LiveKit turn detector
     session = AgentSession(
