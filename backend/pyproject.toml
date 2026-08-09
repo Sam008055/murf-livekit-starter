@@ -12,7 +12,9 @@ dependencies = [
     "livekit-agents[deepgram,google,openai,silero,turn-detector]~=1.4",
     "livekit-murf>=0.1.1",
     "livekit-plugins-noise-cancellation~=0.2",
+    "pypdf>=6.15.0",
     "python-dotenv",
+    "supabase>=2.31.0",
 ]
 
 [dependency-groups]

@@ -1,200 +1,282 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Farm &amp; Fields - Kisan Mitra Active Call</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface-dim": "#f8d2c4",
-                        "secondary": "#7b5800",
-                        "tertiary-container": "#3d4b35",
-                        "on-primary-fixed": "#0a2100",
-                        "surface-tint": "#43682b",
-                        "surface-container-lowest": "#ffffff",
-                        "error": "#ba1a1a",
-                        "on-tertiary": "#ffffff",
-                        "background": "#FAF7F2",
-                        "surface-container-high": "#ffe2d8",
-                        "surface-container": "#ffe9e2",
-                        "surface-variant": "#ffdbce",
-                        "on-secondary-fixed": "#271900",
-                        "primary-container": "#2d5016",
-                        "tertiary-fixed": "#d7e8ca",
-                        "on-surface-variant": "#43493d",
-                        "surface-bright": "#fff8f6",
-                        "on-background": "#2a170f",
-                        "on-primary": "#ffffff",
-                        "surface-sage": "#A8B89C",
-                        "on-error-container": "#93000a",
-                        "outline": "#73796c",
-                        "deep-umber": "#2C1810",
-                        "on-secondary": "#ffffff",
-                        "inverse-surface": "#422b22",
-                        "secondary-fixed-dim": "#f7bd48",
-                        "on-tertiary-container": "#aaba9e",
-                        "on-primary-fixed-variant": "#2c4f15",
-                        "surface": "#fff8f6",
-                        "inverse-on-surface": "#ffede7",
-                        "on-primary-container": "#98c27b",
-                        "on-surface": "#2a170f",
-                        "on-error": "#ffffff",
-                        "primary-fixed-dim": "#a8d38a",
-                        "outline-variant": "#c3c9b9",
-                        "surface-container-low": "#fff1ec",
-                        "inverse-primary": "#a8d38a",
-                        "primary": "#173901",
-                        "secondary-fixed": "#ffdea6",
-                        "tertiary-fixed-dim": "#bbccaf",
-                        "tertiary": "#273420",
-                        "on-tertiary-fixed-variant": "#3d4b35",
-                        "on-secondary-container": "#715000",
-                        "primary-fixed": "#c4efa3",
-                        "on-tertiary-fixed": "#121f0c",
-                        "on-secondary-fixed-variant": "#5d4200",
-                        "secondary-container": "#fdc34d",
-                        "error-container": "#ffdad6",
-                        "surface-container-highest": "#ffdbce"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "1rem",
-                        "lg": "2rem",
-                        "xl": "3rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "section-gap": "80px",
-                        "margin-mobile": "20px",
-                        "unit": "8px",
-                        "gutter": "24px",
-                        "container-max": "1200px"
-                    },
-                    "fontFamily": {
-                        "display-lg": ["Playfair Display"],
-                        "label-mono": ["JetBrains Mono"],
-                        "display-lg-mobile": ["Playfair Display"],
-                        "body-lg": ["DM Sans"],
-                        "body-md": ["DM Sans"],
-                        "headline-md": ["Playfair Display"],
-                        "button-text": ["Playfair Display"]
-                    },
-                    "fontSize": {
-                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
-                        "display-lg-mobile": ["36px", { "lineHeight": "44px", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "headline-md": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
-                        "button-text": ["16px", { "lineHeight": "20px", "letterSpacing": "0.1em", "fontWeight": "600" }]
-                    }
-                }
-            }
-        }
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Farm &amp; Fields - Kisan Mitra Active Call</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-dim': '#f8d2c4',
+              secondary: '#7b5800',
+              'tertiary-container': '#3d4b35',
+              'on-primary-fixed': '#0a2100',
+              'surface-tint': '#43682b',
+              'surface-container-lowest': '#ffffff',
+              error: '#ba1a1a',
+              'on-tertiary': '#ffffff',
+              background: '#FAF7F2',
+              'surface-container-high': '#ffe2d8',
+              'surface-container': '#ffe9e2',
+              'surface-variant': '#ffdbce',
+              'on-secondary-fixed': '#271900',
+              'primary-container': '#2d5016',
+              'tertiary-fixed': '#d7e8ca',
+              'on-surface-variant': '#43493d',
+              'surface-bright': '#fff8f6',
+              'on-background': '#2a170f',
+              'on-primary': '#ffffff',
+              'surface-sage': '#A8B89C',
+              'on-error-container': '#93000a',
+              outline: '#73796c',
+              'deep-umber': '#2C1810',
+              'on-secondary': '#ffffff',
+              'inverse-surface': '#422b22',
+              'secondary-fixed-dim': '#f7bd48',
+              'on-tertiary-container': '#aaba9e',
+              'on-primary-fixed-variant': '#2c4f15',
+              surface: '#fff8f6',
+              'inverse-on-surface': '#ffede7',
+              'on-primary-container': '#98c27b',
+              'on-surface': '#2a170f',
+              'on-error': '#ffffff',
+              'primary-fixed-dim': '#a8d38a',
+              'outline-variant': '#c3c9b9',
+              'surface-container-low': '#fff1ec',
+              'inverse-primary': '#a8d38a',
+              primary: '#173901',
+              'secondary-fixed': '#ffdea6',
+              'tertiary-fixed-dim': '#bbccaf',
+              tertiary: '#273420',
+              'on-tertiary-fixed-variant': '#3d4b35',
+              'on-secondary-container': '#715000',
+              'primary-fixed': '#c4efa3',
+              'on-tertiary-fixed': '#121f0c',
+              'on-secondary-fixed-variant': '#5d4200',
+              'secondary-container': '#fdc34d',
+              'error-container': '#ffdad6',
+              'surface-container-highest': '#ffdbce',
+            },
+            borderRadius: {
+              DEFAULT: '1rem',
+              lg: '2rem',
+              xl: '3rem',
+              full: '9999px',
+            },
+            spacing: {
+              'section-gap': '80px',
+              'margin-mobile': '20px',
+              unit: '8px',
+              gutter: '24px',
+              'container-max': '1200px',
+            },
+            fontFamily: {
+              'display-lg': ['Playfair Display'],
+              'label-mono': ['JetBrains Mono'],
+              'display-lg-mobile': ['Playfair Display'],
+              'body-lg': ['DM Sans'],
+              'body-md': ['DM Sans'],
+              'headline-md': ['Playfair Display'],
+              'button-text': ['Playfair Display'],
+            },
+            fontSize: {
+              'display-lg': [
+                '48px',
+                { lineHeight: '56px', letterSpacing: '-0.02em', fontWeight: '700' },
+              ],
+              'label-mono': [
+                '12px',
+                { lineHeight: '16px', letterSpacing: '0.05em', fontWeight: '500' },
+              ],
+              'display-lg-mobile': ['36px', { lineHeight: '44px', fontWeight: '700' }],
+              'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+              'body-md': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+              'headline-md': ['32px', { lineHeight: '40px', fontWeight: '600' }],
+              'button-text': [
+                '16px',
+                { lineHeight: '20px', letterSpacing: '0.1em', fontWeight: '600' },
+              ],
+            },
+          },
+        },
+      };
     </script>
-<style>
-        body {
-            position: relative;
-        }
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 50;
-        }
-        
-        .visualizer-bar {
-            width: 8px;
-            border-radius: 9999px;
-            background-color: #B8860B;
-            animation: bounce 1.5s ease-in-out infinite alternate;
-        }
-        
-        .visualizer-bar:nth-child(1) { animation-delay: 0.1s; height: 30%; }
-        .visualizer-bar:nth-child(2) { animation-delay: 0.3s; height: 60%; }
-        .visualizer-bar:nth-child(3) { animation-delay: 0.0s; height: 90%; }
-        .visualizer-bar:nth-child(4) { animation-delay: 0.4s; height: 50%; }
-        .visualizer-bar:nth-child(5) { animation-delay: 0.2s; height: 40%; }
+    <style>
+      body {
+        position: relative;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 50;
+      }
 
-        @keyframes bounce {
-            0% { transform: scaleY(0.5); }
-            100% { transform: scaleY(1.2); }
-        }
+      .visualizer-bar {
+        width: 8px;
+        border-radius: 9999px;
+        background-color: #b8860b;
+        animation: bounce 1.5s ease-in-out infinite alternate;
+      }
 
-        .ambient-shadow {
-            box-shadow: 0 20px 40px -10px rgba(44, 24, 16, 0.05);
+      .visualizer-bar:nth-child(1) {
+        animation-delay: 0.1s;
+        height: 30%;
+      }
+      .visualizer-bar:nth-child(2) {
+        animation-delay: 0.3s;
+        height: 60%;
+      }
+      .visualizer-bar:nth-child(3) {
+        animation-delay: 0s;
+        height: 90%;
+      }
+      .visualizer-bar:nth-child(4) {
+        animation-delay: 0.4s;
+        height: 50%;
+      }
+      .visualizer-bar:nth-child(5) {
+        animation-delay: 0.2s;
+        height: 40%;
+      }
+
+      @keyframes bounce {
+        0% {
+          transform: scaleY(0.5);
         }
+        100% {
+          transform: scaleY(1.2);
+        }
+      }
+
+      .ambient-shadow {
+        box-shadow: 0 20px 40px -10px rgba(44, 24, 16, 0.05);
+      }
     </style>
-</head>
-<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-hidden">
-<!-- Top Navigation Anchor from JSON mapping -> Hidden for immersive call screen but keeping structural elements for header -->
-<header class="fixed top-0 w-full bg-background/80 backdrop-blur-sm z-40 transition-all duration-300 ease-in-out flex items-center justify-between px-margin-mobile md:px-gutter max-w-container-max mx-auto h-20">
-<div class="flex items-center gap-4">
-<img class="h-10 w-10 object-contain" data-alt="A small, elegant minimalist logo of a golden wheat stalk, conveying agricultural heritage and premium quality. The lines are delicate and precise, set against a transparent or very light warm background." src="https://lh3.googleusercontent.com/aida/AP1WRLth2Ypfs0I2JJf3UKAZT-KVzTXsvgLlBwSG51mJG5WcDWCDFvj3dbV3aGEw6NhIHFcdiSG5FCrHqPWgV4JD-ohhXhZrCGvgqFfTqJj4ZYODmB_ADLCmWA-h4tH4sAHYNqqmE4G67CmBrBLEFojig6v86oteuTVOByrPOmSGp2TRL3uyHm3QNEULjn-kHkbdhWHy-h286q4HNXWwk1lyX19NXr64x2_4WnqpXHDjGP-zdrlzQQBhQGoRNyg"/>
-<h1 class="font-display-lg-mobile md:font-display-lg text-primary tracking-tight">Farm &amp; Fields</h1>
-</div>
-<div class="font-label-mono text-surface-sage uppercase tracking-widest text-label-mono">
-            BUILT WITH LIVEKIT AGENTS
+  </head>
+  <body
+    class="bg-background text-on-background font-body-md flex min-h-screen flex-col overflow-hidden"
+  >
+    <!-- Top Navigation Anchor from JSON mapping -> Hidden for immersive call screen but keeping structural elements for header -->
+    <header
+      class="bg-background/80 px-margin-mobile md:px-gutter max-w-container-max fixed top-0 z-40 mx-auto flex h-20 w-full items-center justify-between backdrop-blur-sm transition-all duration-300 ease-in-out"
+    >
+      <div class="flex items-center gap-4">
+        <img
+          class="h-10 w-10 object-contain"
+          data-alt="A small, elegant minimalist logo of a golden wheat stalk, conveying agricultural heritage and premium quality. The lines are delicate and precise, set against a transparent or very light warm background."
+          src="https://lh3.googleusercontent.com/aida/AP1WRLth2Ypfs0I2JJf3UKAZT-KVzTXsvgLlBwSG51mJG5WcDWCDFvj3dbV3aGEw6NhIHFcdiSG5FCrHqPWgV4JD-ohhXhZrCGvgqFfTqJj4ZYODmB_ADLCmWA-h4tH4sAHYNqqmE4G67CmBrBLEFojig6v86oteuTVOByrPOmSGp2TRL3uyHm3QNEULjn-kHkbdhWHy-h286q4HNXWwk1lyX19NXr64x2_4WnqpXHDjGP-zdrlzQQBhQGoRNyg"
+        />
+        <h1 class="font-display-lg-mobile md:font-display-lg text-primary tracking-tight">
+          Farm &amp; Fields
+        </h1>
+      </div>
+      <div class="font-label-mono text-surface-sage text-label-mono tracking-widest uppercase">
+        BUILT WITH LIVEKIT AGENTS
+      </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main
+      class="px-margin-mobile md:px-gutter max-w-container-max relative z-10 mx-auto flex w-full flex-grow flex-col justify-between pt-24 pb-32"
+    >
+      <!-- Visualizer Area -->
+      <div class="py-section-gap flex flex-grow flex-col items-center justify-center">
+        <div
+          class="bg-surface-container-low ambient-shadow relative mb-8 flex h-48 w-48 items-center justify-center gap-2 rounded-full"
+        >
+          <!-- Pulse ring -->
+          <div
+            class="border-surface-sage/30 absolute inset-0 animate-ping rounded-full border opacity-50"
+          ></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
         </div>
-</header>
-<!-- Main Content Canvas -->
-<main class="flex-grow flex flex-col justify-between pt-24 pb-32 px-margin-mobile md:px-gutter max-w-container-max mx-auto w-full relative z-10">
-<!-- Visualizer Area -->
-<div class="flex flex-col items-center justify-center flex-grow py-section-gap">
-<div class="w-48 h-48 rounded-full bg-surface-container-low ambient-shadow flex items-center justify-center gap-2 mb-8 relative">
-<!-- Pulse ring -->
-<div class="absolute inset-0 rounded-full border border-surface-sage/30 animate-ping opacity-50"></div>
-<div class="visualizer-bar"></div>
-<div class="visualizer-bar"></div>
-<div class="visualizer-bar"></div>
-<div class="visualizer-bar"></div>
-<div class="visualizer-bar"></div>
-</div>
-<p class="font-headline-md text-surface-sage text-center max-w-md">Kisan Mitra is listening, ask your question</p>
-</div>
-<!-- Chat Area -->
-<div class="flex flex-col gap-6 w-full max-w-2xl mx-auto mb-12">
-<!-- User Message -->
-<div class="flex justify-end w-full">
-<div class="bg-surface-sage text-on-primary px-6 py-4 rounded-t-2xl rounded-bl-2xl rounded-br-sm max-w-[80%] ambient-shadow font-body-lg">
-                    मेरी गेहूं की फसल में पीलापन आ रहा है
-                </div>
-</div>
-<!-- Agent Message -->
-<div class="flex justify-start w-full">
-<div class="bg-surface-container-lowest border border-surface-sage/30 text-on-background px-6 py-4 rounded-t-2xl rounded-br-2xl rounded-bl-sm max-w-[80%] ambient-shadow font-display-lg-mobile text-xl leading-relaxed">
-                    गेहूं के पत्तों में पीलापन कई कारणों से हो सकता है। सबसे पहले, नाइट्रोजन की कमी जाँचें। क्या आपने हाल ही में यूरिया डाला है?
-                </div>
-</div>
-</div>
-</main>
-<!-- Bottom Control Bar -->
-<div class="fixed bottom-margin-mobile left-0 right-0 z-40 px-margin-mobile flex justify-center">
-<div class="bg-background border border-outline-variant/30 rounded-full py-3 px-6 ambient-shadow flex items-center gap-4 md:gap-6 w-full max-w-[600px] justify-between">
-<button class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-container/10 text-primary-container hover:bg-primary-container/20 transition-colors">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mic</span>
-</button>
-<button class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-container/10 text-primary-container hover:bg-primary-container/20 transition-colors">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">videocam</span>
-</button>
-<button class="w-12 h-12 rounded-full flex items-center justify-center text-outline hover:bg-surface-variant/50 transition-colors">
-<span class="material-symbols-outlined">present_to_all</span>
-</button>
-<button class="w-12 h-12 rounded-full flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
-</button>
-<button class="bg-[#C75B39] text-white font-button-text text-button-text px-6 py-3 rounded-full hover:bg-red-800 transition-colors shadow-sm ml-2">
-                END CALL
-            </button>
-</div>
-</div>
-</body></html>
+        <p class="font-headline-md text-surface-sage max-w-md text-center">
+          Kisan Mitra is listening, ask your question
+        </p>
+      </div>
+      <!-- Chat Area -->
+      <div class="mx-auto mb-12 flex w-full max-w-2xl flex-col gap-6">
+        <!-- User Message -->
+        <div class="flex w-full justify-end">
+          <div
+            class="bg-surface-sage text-on-primary ambient-shadow font-body-lg max-w-[80%] rounded-t-2xl rounded-br-sm rounded-bl-2xl px-6 py-4"
+          >
+            मेरी गेहूं की फसल में पीलापन आ रहा है
+          </div>
+        </div>
+        <!-- Agent Message -->
+        <div class="flex w-full justify-start">
+          <div
+            class="bg-surface-container-lowest border-surface-sage/30 text-on-background ambient-shadow font-display-lg-mobile max-w-[80%] rounded-t-2xl rounded-br-2xl rounded-bl-sm border px-6 py-4 text-xl leading-relaxed"
+          >
+            गेहूं के पत्तों में पीलापन कई कारणों से हो सकता है। सबसे पहले, नाइट्रोजन की कमी जाँचें।
+            क्या आपने हाल ही में यूरिया डाला है?
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Bottom Control Bar -->
+    <div
+      class="bottom-margin-mobile px-margin-mobile fixed right-0 left-0 z-40 flex justify-center"
+    >
+      <div
+        class="bg-background border-outline-variant/30 ambient-shadow flex w-full max-w-[600px] items-center justify-between gap-4 rounded-full border px-6 py-3 md:gap-6"
+      >
+        <button
+          class="bg-primary-container/10 text-primary-container hover:bg-primary-container/20 flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+        >
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1"
+            >mic</span
+          >
+        </button>
+        <button
+          class="bg-primary-container/10 text-primary-container hover:bg-primary-container/20 flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+        >
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1"
+            >videocam</span
+          >
+        </button>
+        <button
+          class="text-outline hover:bg-surface-variant/50 flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+        >
+          <span class="material-symbols-outlined">present_to_all</span>
+        </button>
+        <button
+          class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
+        >
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1"
+            >chat</span
+          >
+        </button>
+        <button
+          class="font-button-text text-button-text ml-2 rounded-full bg-[#C75B39] px-6 py-3 text-white shadow-sm transition-colors hover:bg-red-800"
+        >
+          END CALL
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

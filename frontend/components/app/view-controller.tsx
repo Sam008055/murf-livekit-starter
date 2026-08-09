@@ -1,14 +1,13 @@
 'use client';
 
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
+import { toast } from 'sonner';
 import { useSessionContext } from '@livekit/components-react';
-import React, { useEffect, useRef, useState } from 'react';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
 import { WelcomeView } from '@/components/app/welcome-view';
-
-import { toast } from 'sonner';
 
 const MotionWelcomeView = motion.create(WelcomeView);
 const MotionSessionView = motion.create(AgentSessionView_01);
@@ -54,9 +53,10 @@ export function ViewController({ appConfig }: ViewControllerProps) {
   const handleStartCall = async () => {
     try {
       await start();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error('Failed to connect', {
-        description: e.message || 'Please check your microphone permissions and try again.',
+        description:
+          (e as Error)?.message || 'Please check your microphone permissions and try again.',
       });
     }
   };

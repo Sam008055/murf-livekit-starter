@@ -1,6 +1,9 @@
 import asyncio
+import json
 import logging
 import os
+import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -17,22 +20,32 @@ from livekit.agents import (
 from livekit.plugins import deepgram, murf, noise_cancellation, openai, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
+# Add backend/src to module path if needed
+sys.path.append(str(Path(__file__).parent))
+
+import db
+import rag
+
 logger = logging.getLogger("agent")
 
 load_dotenv(".env.local")
 load_dotenv(".env")
 
 
-# Change this prompt to change what your voice agent does.
-# See README.md for example prompts (customer support, language tutor, receptionist).
+# Khetify System Prompt with RAG & Memory tool guidance
 SYSTEM_PROMPT = """IDENTITY: You are "Khetify", a premium, highly respectful and knowledgeable AI agricultural assistant working for a modern, high-end farmer support initiative. You have a female persona.
 
 OBJECTIVES:
-1. Answer general queries about crop cycles, soil preparation, and basic farming best practices.
-2. Help farmers identify common pests based on descriptions.
-3. Gather preliminary information about complex issues to prepare for a human agronomist.
+1. Answer agricultural queries using grounded knowledge from official guides and government schemes.
+2. Help farmers identify pests, soil prep requirements, and crop management practices.
+3. Automatically remember key facts about each farmer (crops grown, land size, district, irrigation type).
 
-KNOWLEDGE: You know general agronomy, seasonal crops grown in India, and sustainable farming practices. You DO NOT have real-time local market prices unless explicitly provided.
+KNOWLEDGE & RAG TOOL:
+- You have access to `search_agricultural_knowledge(query)` to search indexed agricultural documents (ICAR guidelines, PM-Kisan, KCC schemes, crop practices, pest control). ALWAYS call this tool when asked about farming guidelines, government schemes, or pest/disease solutions.
+
+MEMORY & FARMER FACTS TOOL:
+- You have access to `save_farmer_fact(key, value)` to persist facts in the farmer's profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'). Call this tool whenever the farmer reveals new details about their farm.
+- You have access to `get_farmer_memory()` to retrieve saved farmer facts.
 
 CRITICAL LANGUAGE SELECTION RULE (TOP PRIORITY):
 Speech-To-Text (STT) transcribes spoken English phonetically into Devanagari script. You MUST analyze the underlying spoken words, NOT just the script.
@@ -74,10 +87,48 @@ class Assistant(Agent):
         super().__init__(instructions=SYSTEM_PROMPT)
         self.room = room
 
+    @property
+    def current_farmer_id(self) -> str:
+        if self.room and self.room.remote_participants:
+            part = list(self.room.remote_participants.values())[0]
+            return part.identity
+        return "farmer_default"
+
+    @llm.function_tool(
+        description="Search the official agricultural knowledge base (ICAR guidelines, PM-Kisan, KCC, soil prep, pest/disease management, package of practices) for grounded advice."
+    )
+    async def search_agricultural_knowledge(self, query: str) -> str:
+        """Search agricultural knowledge base for scientific farming guidelines."""
+        logger.info(f"RAG tool search requested: '{query}'")
+        result = rag.search_knowledge_base(query)
+        logger.info(f"RAG result snippet length: {len(result)}")
+        return result
+
+    @llm.function_tool(
+        description="Retrieve saved memory and profile details for the connected farmer (such as crop types, land size, district/location, irrigation type)."
+    )
+    async def get_farmer_memory(self) -> str:
+        """Retrieve stored facts and profile for the connected farmer."""
+        fid = self.current_farmer_id
+        profile = db.get_farmer(fid)
+        return json.dumps(profile, ensure_ascii=False)
+
+    @llm.function_tool(
+        description="Save or update a specific fact about the farmer to their permanent database profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'; key='irrigation', value='Drip')."
+    )
+    async def save_farmer_fact(
+        self, key: str, value: str, farmer_name: str = None
+    ) -> str:
+        """Save a new fact about the farmer."""
+        fid = self.current_farmer_id
+        res = db.save_farmer_fact(fid, name=farmer_name, key=key, value=value)
+        logger.info(f"Saved farmer fact for {fid}: {key}={value}")
+        return f"Successfully saved fact '{key}: {value}' to farmer profile memory."
+
     @llm.function_tool(
         description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye."
     )
-    async def end_call(self, reason: str):
+    async def end_call(self, reason: str) -> str:
         """Ends the current call."""
         logger.info("Agent ending the call at user's request.")
         if self.room:
@@ -97,44 +148,31 @@ server.setup_fnc = prewarm
 
 @server.rtc_session(agent_name="my-agent")
 async def my_agent(ctx: JobContext):
-    # Logging setup
-    # Add any other context you want in all log entries here
     ctx.log_context_fields = {
         "room": ctx.room.name,
     }
 
-    # Set up a voice AI pipeline using Murf Falcon, Gemini, Deepgram, and the LiveKit turn detector
+    # Set up voice AI pipeline using Murf Falcon, Gemini / Groq LLM, Deepgram, and LiveKit turn detector
     session = AgentSession(
-        # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-        # See all available models at https://docs.livekit.io/agents/models/stt/
         stt=deepgram.STT(
             model="nova-3",
             language="multi",
         ),
-        # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-        # See all available models at https://docs.livekit.io/agents/models/llm/
         llm=openai.LLM(
             model="llama-3.3-70b-versatile",
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
         ),
-        # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-        # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
         tts=murf.TTS(
-            voice="hi-IN-sunaina",  # Valid Murf Hindi Female voice
-            locale="hi-IN",  # Hindi Locale
+            voice="hi-IN-sunaina",
+            locale="hi-IN",
             style="Conversational",
         ),
-        # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-        # See more at https://docs.livekit.io/agents/build/turns
         vad=ctx.proc.userdata["vad"],
         turn_detection=MultilingualModel(),
-        # allow the LLM to generate a response while waiting for the end of turn
-        # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
         preemptive_generation=True,
     )
 
-    # Start the session, which initializes the voice pipeline and warms up the models
     await session.start(
         agent=Assistant(room=ctx.room),
         room=ctx.room,
@@ -150,27 +188,68 @@ async def my_agent(ctx: JobContext):
         ),
     )
 
-    # Join the room and connect to the user
     await ctx.connect()
 
-    # Define a greeting function
     async def greet():
-        # Wait for a moment to ensure the user's client is fully ready to receive audio
         await asyncio.sleep(1.0)
-        session.say(
-            "नमस्ते! मैं खेतीफाई से आपकी डिजिटल सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?",
-            allow_interruptions=True,
+
+        remote_participants = list(ctx.room.remote_participants.values())
+        participant = remote_participants[0] if remote_participants else None
+        current_farmer_id = participant.identity if participant else "farmer_default"
+
+        metadata = {}
+        if participant and participant.metadata:
+            try:
+                metadata = json.loads(participant.metadata)
+            except Exception:
+                pass
+
+        farmer_name = metadata.get("name") or (
+            participant.name if participant and participant.name != "user" else None
         )
+        district = metadata.get("district", "")
+        crop = metadata.get("crop", "")
+
+        facts_update = {}
+        if district:
+            facts_update["district"] = district
+        if crop:
+            facts_update["crop"] = crop
+
+        profile = db.update_farmer_profile(
+            farmer_id=current_farmer_id,
+            name=farmer_name,
+            facts_update=facts_update if facts_update else None,
+        )
+
+        stored_name = profile.get("name")
+        facts = profile.get("facts", {})
+        stored_crop = facts.get("crop")
+        stored_district = facts.get("district")
+
+        if stored_name and stored_name != "Kisan" and not profile.get("is_new"):
+            details = []
+            if stored_district:
+                details.append(f"{stored_district}")
+            if stored_crop:
+                details.append(f"{stored_crop} की खेती")
+            detail_str = f" ({', '.join(details)})" if details else ""
+            greeting_text = f"नमस्ते {stored_name} जी{detail_str}! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+        elif stored_name and stored_name != "Kisan":
+            greeting_text = f"नमस्ते {stored_name} जी! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+        else:
+            greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+
+        session.say(greeting_text, allow_interruptions=True)
 
     background_tasks = set()
 
-    # If the user is already in the room, greet them
     if len(ctx.room.remote_participants) > 0:
         task = asyncio.create_task(greet())
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
     else:
-        # Otherwise wait for them to join
+
         @ctx.room.on("participant_connected")
         def on_participant_connected(participant: rtc.RemoteParticipant):
             task = asyncio.create_task(greet())

@@ -1,4 +1,4 @@
-import { Playfair_Display, DM_Sans } from 'next/font/google';
+import { DM_Sans, Playfair_Display } from 'next/font/google';
 import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import { ThemeProvider } from '@/components/app/theme-provider';
@@ -77,20 +77,24 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <header className="fixed top-0 left-0 z-50 w-full flex flex-row justify-between p-6 items-center pointer-events-none">
+          <header className="pointer-events-none fixed top-0 left-0 z-50 flex w-full flex-row items-center justify-between p-6">
             <a
               target="_blank"
               rel="noopener noreferrer"
               href="#"
-              className="scale-100 transition-transform duration-300 hover:scale-105 pointer-events-auto"
+              className="pointer-events-auto scale-100 transition-transform duration-300 hover:scale-105"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo} alt={`${companyName} Logo`} className="block h-10 w-auto rounded-md shadow-sm border border-border/50 bg-background/50 backdrop-blur-sm p-1 dark:hidden" />
+              <img
+                src={logo}
+                alt={`${companyName} Logo`}
+                className="border-border/50 bg-background/50 block h-10 w-auto rounded-md border p-1 shadow-sm backdrop-blur-sm dark:hidden"
+              />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoDark ?? logo}
                 alt={`${companyName} Logo`}
-                className="hidden h-10 w-auto rounded-md shadow-sm border border-border/50 bg-background/50 backdrop-blur-sm p-1 dark:block"
+                className="border-border/50 bg-background/50 hidden h-10 w-auto rounded-md border p-1 shadow-sm backdrop-blur-sm dark:block"
               />
             </a>
             <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">

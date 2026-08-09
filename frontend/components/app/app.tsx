@@ -28,9 +28,35 @@ interface AppProps {
 
 export function App({ appConfig }: AppProps) {
   const tokenSource = useMemo(() => {
-    return typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string'
-      ? getSandboxTokenSource(appConfig)
-      : TokenSource.endpoint('/api/token');
+    if (typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string') {
+      return getSandboxTokenSource(appConfig);
+    }
+    return TokenSource.custom(async (options) => {
+      const savedFarmer =
+        typeof window !== 'undefined' ? localStorage.getItem('khetify_farmer_profile') : null;
+      const farmerData = savedFarmer ? JSON.parse(savedFarmer) : {};
+
+      const res = await fetch('/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...options,
+          farmer_id: farmerData.farmer_id || '9876543210',
+          name: farmerData.name || 'Rajesh Kumar',
+          district: farmerData.district || 'Raigad',
+          crop: farmerData.crop || 'Wheat',
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch token: ${res.statusText}`);
+      }
+      const data = await res.json();
+      return {
+        serverUrl: data.serverUrl,
+        participantToken: data.participantToken,
+      };
+    });
   }, [appConfig]);
 
   const session = useSession(

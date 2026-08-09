@@ -77,8 +77,7 @@
   --font-sans:
     var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif:
-    var(--font-playfair), ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono:
     var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;

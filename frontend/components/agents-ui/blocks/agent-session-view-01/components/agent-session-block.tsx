@@ -32,8 +32,8 @@ function AgentStateIndicator({ state }: { state: string }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl items-center justify-center gap-2 pb-4 text-sm font-semibold text-primary/80">
-      <div className={cn("w-2 h-2 rounded-full", dotClass)} />
+    <div className="text-primary/80 mx-auto flex w-full max-w-2xl items-center justify-center gap-2 pb-4 text-sm font-semibold">
+      <div className={cn('h-2 w-2 rounded-full', dotClass)} />
       {label}
     </div>
   );

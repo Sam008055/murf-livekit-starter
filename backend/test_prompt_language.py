@@ -1,11 +1,12 @@
 import asyncio
 import os
 import sys
-from dotenv import load_dotenv
-from livekit.plugins import openai
-from livekit.agents import llm
 
-sys.stdout.reconfigure(encoding='utf-8')
+from dotenv import load_dotenv
+from livekit.agents import llm
+from livekit.plugins import openai
+
+sys.stdout.reconfigure(encoding="utf-8")
 load_dotenv(".env")
 
 SYSTEM_PROMPT = """IDENTITY: You are "Khetify", a premium, highly respectful and knowledgeable AI agricultural assistant working for a modern, high-end farmer support initiative. You have a female persona.
@@ -51,19 +52,20 @@ STYLE:
 - Avoid bullet points, numbered lists, markdown formatting, or special characters in your spoken output since your text will be converted to speech.
 """
 
+
 async def test_language_detection():
     groq_llm = openai.LLM(
         model="llama-3.3-70b-versatile",
         base_url="https://api.groq.com/openai/v1",
         api_key=os.getenv("GROQ_API_KEY"),
     )
-    
+
     test_inputs = [
         "Can you tell me about wheat farming?",  # Plain English
         "कैन यू टेल मी अबाउट व्हीट फार्मिंग?",  # English in Devanagari
-        "व्हाट शुड आई डू फॉर पेस्ट कंट्रोल?",   # English in Devanagari
-        "मेरी गेहूं की फसल पीली पड़ रही है, क्या करूं?", # Hindi
-        "How much Urea should I use for 2 acres of wheat?", # Dosage request in English
+        "व्हाट शुड आई डू फॉर पेस्ट कंट्रोल?",  # English in Devanagari
+        "मेरी गेहूं की फसल पीली पड़ रही है, क्या करूं?",  # Hindi
+        "How much Urea should I use for 2 acres of wheat?",  # Dosage request in English
     ]
 
     for user_input in test_inputs:
@@ -78,6 +80,6 @@ async def test_language_detection():
                 print(chunk.delta.content, end="", flush=True)
         print()
 
+
 if __name__ == "__main__":
     asyncio.run(test_language_detection())
-

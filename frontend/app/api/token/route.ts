@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       throw new Error('LIVEKIT_API_SECRET is not defined');
     }
 
-    // Parse room config from request body (if provided).
+    // Parse room config and farmer profile from request body.
     const body = await req.json().catch(() => ({}));
     let roomConfig: RoomConfiguration | undefined;
     if (body?.room_config) {
@@ -43,14 +43,26 @@ export async function POST(req: Request) {
         { ignoreUnknownFields: true }
       );
     }
-      
-    // Generate participant token
-    const participantName = 'user';
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
+
+    // Generate participant token with farmer identity & metadata
+    const participantName = body?.name || 'Kisan';
+    const participantIdentity =
+      body?.farmer_id || body?.phone_number || `farmer_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
 
+    const metadataObj = {
+      farmer_id: participantIdentity,
+      name: participantName,
+      district: body?.district || '',
+      crop: body?.crop || '',
+    };
+
     const participantToken = await createParticipantToken(
-      { identity: participantIdentity, name: participantName },
+      {
+        identity: participantIdentity,
+        name: participantName,
+        metadata: JSON.stringify(metadataObj),
+      },
       roomName,
       roomConfig
     );
