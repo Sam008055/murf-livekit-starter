@@ -188,8 +188,8 @@ async def my_agent(ctx: JobContext):
             _strict_tool_schema=False,
         ),
         tts=murf.TTS(
-            voice="hi-IN-sunaina",
-            locale="hi-IN",
+            voice="en-IN-isha",
+            locale="en-IN",
             style="Conversational",
         ),
         vad=ctx.proc.userdata["vad"],
