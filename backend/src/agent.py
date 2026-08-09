@@ -188,8 +188,8 @@ async def my_agent(ctx: JobContext):
             _strict_tool_schema=False,
         ),
         tts=murf.TTS(
-            voice="en-IN-isha",
-            locale="en-IN",
+            voice="hi-IN-sunaina",
+            locale="hi-IN",
             style="Conversational",
         ),
         vad=ctx.proc.userdata["vad"],
@@ -368,6 +368,44 @@ async def my_agent(ctx: JobContext):
                 activity_task.cancel()
         else:
             reset_activity_timer()
+
+    @session.on("user_speech_committed")
+    def on_user_speech_committed(msg):
+        # Dynamically switch TTS voice based on detected language of user's speech
+        try:
+            # Handle if msg is a ChatContext
+            if hasattr(msg, "messages") and msg.messages:
+                msg_obj = msg.messages[-1]
+            else:
+                msg_obj = msg
+
+            if hasattr(msg_obj, "content"):
+                if isinstance(msg_obj.content, str):
+                    text = msg_obj.content
+                elif isinstance(msg_obj.content, list):
+                    text = " ".join([getattr(c, "text", "") for c in msg_obj.content])
+                else:
+                    text = str(msg_obj.content)
+            else:
+                text = str(msg_obj)
+                
+            text = text.lower()
+            
+            latin_chars = sum(1 for c in text if 'a' <= c <= 'z')
+            dev_chars = sum(1 for c in text if '\u0900' <= c <= '\u097F')
+            
+            # Common English phonetic words transcribed in Devanagari by STT
+            phonetic_english_words = ["कैन", "यू", "टेल", "मी", "व्हाट", "हाउ", "टु", "प्लीज", "एक्सप्लेन", "अबाउट", "इज", "देयर", "एनी", "व्हॉट"]
+            has_phonetic_english = any(w in text for w in phonetic_english_words)
+            
+            if latin_chars > dev_chars or has_phonetic_english:
+                logger.info(f"Detected English input (Latin: {latin_chars}, Dev: {dev_chars}, Phonetic: {has_phonetic_english}). Switching TTS to en-IN-isha.")
+                session.tts.update_options(voice="en-IN-isha", locale="en-IN")
+            else:
+                logger.info(f"Detected Hindi input (Latin: {latin_chars}, Dev: {dev_chars}). Switching TTS to hi-IN-sunaina.")
+                session.tts.update_options(voice="hi-IN-sunaina", locale="hi-IN")
+        except Exception as e:
+            logger.warning(f"Error in dynamic language detection: {e}")
 
     @session.on("agent_speech_committed")
     def on_agent_speech_committed(msg):
