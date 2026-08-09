@@ -79,7 +79,7 @@ GUARDRAILS (STRICT):
 STYLE:
 - Adapt your response length dynamically according to the complexity of the question asked. For simple or quick queries, provide brief and direct answers suitable for voice listening. For deep or complex questions, provide detailed, thorough, and informative explanations.
 - Be patient, friendly, respectful, and conversational. Always use a highly respectful and formal register (always use "Aap", never "Tu" or "Tum" when speaking Hindi).
-- Avoid bullet points, numbered lists, markdown formatting, or special characters in your spoken output since your text will be converted to speech.
+- Avoid bullet points, numbered lists, markdown formatting, brackets or parentheses like (), or special characters in your spoken output since your text will be converted to speech.
 """
 
 
@@ -92,6 +92,18 @@ class Assistant(Agent):
     def current_farmer_id(self) -> str:
         if self.room and self.room.remote_participants:
             part = next(iter(self.room.remote_participants.values()))
+            if part.metadata:
+                try:
+                    parsed = json.loads(part.metadata)
+                    if isinstance(parsed, dict):
+                        if parsed.get("farmer_id"):
+                            return parsed["farmer_id"]
+                        if parsed.get("name"):
+                            return f"farmer_{parsed['name'].strip().lower().replace(' ', '_')}"
+                except Exception:
+                    pass
+            if part.name and part.name not in ["user", "Kisan", ""]:
+                return f"farmer_{part.name.strip().lower().replace(' ', '_')}"
             return part.identity
         return "farmer_default"
 
@@ -163,6 +175,7 @@ async def my_agent(ctx: JobContext):
             model="llama-3.3-70b-versatile",
             base_url="https://api.groq.com/openai/v1",
             api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
+            _strict_tool_schema=False,
         ),
         tts=murf.TTS(
             voice="hi-IN-sunaina",
@@ -219,15 +232,23 @@ async def my_agent(ctx: JobContext):
 
             await asyncio.sleep(0.1)
 
-        current_farmer_id = metadata.get("farmer_id") or (
-            participant.identity if participant else "farmer_default"
-        )
-
         farmer_name = metadata.get("name") or (
             participant.name
             if participant and participant.name not in ["user", "Kisan"]
             else None
         )
+
+        raw_fid = metadata.get("farmer_id") or (
+            participant.identity if participant else "farmer_default"
+        )
+        if farmer_name and (
+            not metadata.get("farmer_id") or raw_fid in ["farmer_default", "user"]
+        ):
+            slug_name = farmer_name.strip().lower().replace(" ", "_")
+            current_farmer_id = f"farmer_{slug_name}"
+        else:
+            current_farmer_id = raw_fid
+
         district = metadata.get("district", "")
         crop = metadata.get("crop", "")
 
@@ -247,6 +268,7 @@ async def my_agent(ctx: JobContext):
         facts = profile.get("facts", {})
         stored_crop = facts.get("crop")
         stored_district = facts.get("district")
+        is_returning = profile.get("is_returning", False)
 
         is_valid_name = (
             stored_name
@@ -254,18 +276,19 @@ async def my_agent(ctx: JobContext):
             and not stored_name.isdigit()
         )
 
-        if is_valid_name and not profile.get("is_new"):
-            details = []
-            if stored_district:
-                details.append(f"{stored_district}")
-            if stored_crop:
-                details.append(f"{stored_crop} की खेती")
-            detail_str = f" ({', '.join(details)})" if details else ""
-            greeting_text = f"नमस्ते {stored_name} जी{detail_str}! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+        if is_valid_name and is_returning:
+            if stored_district and stored_crop:
+                greeting_text = f"नमस्ते {stored_name} जी! {stored_district} में {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+            elif stored_district:
+                greeting_text = f"नमस्ते {stored_name} जी! {stored_district} से खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+            elif stored_crop:
+                greeting_text = f"नमस्ते {stored_name} जी! {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+            else:
+                greeting_text = f"नमस्ते {stored_name} जी! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
         elif is_valid_name:
             greeting_text = f"नमस्ते {stored_name} जी! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
         else:
-            greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+            greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
 
         logger.info(
             f"Greeting participant {current_farmer_id} (Name: '{stored_name}'): {greeting_text}"

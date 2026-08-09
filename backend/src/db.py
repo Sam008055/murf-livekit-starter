@@ -117,8 +117,25 @@ def update_farmer_profile(
     language: str | None = None,
     facts_update: dict | None = None,
 ) -> dict:
-    """Update general farmer profile."""
+    """Update general farmer profile and return returning status."""
     farmer = get_farmer(farmer_id)
+    is_new = farmer.get("is_new", True)
+    stored_name = farmer.get("name")
+
+    # Farmer is returning ONLY IF row existed, had a valid prior interaction, and name matches (if name supplied)
+    name_matched = True
+    if (
+        name
+        and stored_name
+        and stored_name not in ["Kisan", "user", "farmer_default"]
+        and name.strip().lower() != stored_name.strip().lower()
+    ):
+        name_matched = False
+
+    is_returning = (
+        (not is_new) and name_matched and (farmer.get("last_interaction") is not None)
+    )
+
     facts = farmer["facts"]
     if facts_update:
         facts.update(facts_update)
@@ -149,4 +166,6 @@ def update_farmer_profile(
     conn.commit()
     conn.close()
 
-    return get_farmer(farmer_id)
+    result = get_farmer(farmer_id)
+    result["is_returning"] = is_returning
+    return result

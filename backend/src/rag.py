@@ -1,3 +1,4 @@
+import logging
 import os
 import sqlite3
 
@@ -6,6 +7,8 @@ from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()
+
+logger = logging.getLogger("rag")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
@@ -50,7 +53,7 @@ def search_knowledge_base(query: str, top_k: int = 3) -> str:
             )
             query_vec = np.array(res.embeddings[0].values, dtype=np.float32)
         except Exception as e:
-            print(f"RAG embedding query fallback to text match: {e}")
+            logger.warning(f"RAG embedding query fallback to text match: {e}")
 
     scored_chunks = []
     query_keywords = set(query.lower().split())
