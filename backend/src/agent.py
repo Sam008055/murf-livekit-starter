@@ -169,9 +169,10 @@ async def my_agent(ctx: JobContext):
     }
 
     groq_key = os.getenv("GROQ_API_KEY") or ""
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     key_suffix = f"...{groq_key[-4:]}" if len(groq_key) >= 4 else "NOT SET"
     logger.info(
-        f"Starting agent for room '{ctx.room.name}' using Groq API key ending in {key_suffix}"
+        f"Starting agent for room '{ctx.room.name}' using Groq model '{groq_model}' and API key ending in {key_suffix}"
     )
 
     # Set up voice AI pipeline using Murf Falcon, Gemini / Groq LLM, Deepgram, and LiveKit turn detector
