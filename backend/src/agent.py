@@ -108,7 +108,7 @@ class Assistant(Agent):
     @llm.function_tool(
         description="Retrieve saved memory and profile details for the connected farmer (such as crop types, land size, district/location, irrigation type)."
     )
-    async def get_farmer_memory(self) -> str:
+    async def get_farmer_memory(self, query: str = "profile") -> str:
         """Retrieve stored facts and profile for the connected farmer."""
         fid = self.current_farmer_id
         profile = db.get_farmer(fid)
