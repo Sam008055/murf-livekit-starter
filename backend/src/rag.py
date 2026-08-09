@@ -82,7 +82,10 @@ def search_knowledge_base(query: str, top_k: int = 2) -> str:
     for score, doc_name, page_num, content in top_matches:
         if score > 0.05:
             clean_doc = doc_name.replace(".pdf", "").replace("_", " ")
-            results.append(f"[{clean_doc} - Page {page_num}]\n{content.strip()}")
+            chunk_content = content.strip()
+            if len(chunk_content) > 700:
+                chunk_content = chunk_content[:700] + "..."
+            results.append(f"[{clean_doc} - Page {page_num}]\n{chunk_content}")
 
     if not results:
         return "No specific agricultural guidelines found in document knowledge base for this exact phrase."

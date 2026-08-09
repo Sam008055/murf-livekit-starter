@@ -369,6 +369,18 @@ async def my_agent(ctx: JobContext):
         else:
             reset_activity_timer()
 
+    @session.on("agent_speech_committed")
+    def on_agent_speech_committed(msg):
+        # Truncate history to prevent token limits on long calls
+        try:
+            if hasattr(session, "history") and hasattr(session.history, "_items"):
+                # Keep system prompt (index 0) and last 14 messages (sliding window of 15)
+                if len(session.history._items) > 15:
+                    session.history._items = [session.history._items[0]] + session.history._items[-14:]
+                    logger.info(f"Truncated conversation history to {len(session.history._items)} items to save tokens.")
+        except Exception as e:
+            logger.warning(f"Failed to truncate history: {e}")
+
     reset_activity_timer()
 
 
