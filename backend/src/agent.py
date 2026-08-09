@@ -195,7 +195,7 @@ async def my_agent(ctx: JobContext):
         ),
         vad=ctx.proc.userdata["vad"],
         turn_detection=MultilingualModel(),
-        preemptive_generation=True,
+        preemptive_generation=False,
     )
 
     await session.start(
@@ -396,15 +396,30 @@ async def my_agent(ctx: JobContext):
             dev_chars = sum(1 for c in text if '\u0900' <= c <= '\u097F')
             
             # Common English phonetic words transcribed in Devanagari by STT
-            phonetic_english_words = ["कैन", "यू", "टेल", "मी", "व्हाट", "हाउ", "टु", "प्लीज", "एक्सप्लेन", "अबाउट", "इज", "देयर", "एनी", "व्हॉट"]
+            phonetic_english_words = ["कैन", "यू", "टेल", "मी", "व्हाट", "हाउ", "टु", "प्लीज", "एक्सप्लेन", "अबाउट", "इज", "देयर", "एनी", "व्हॉट", "फर्टिलाइजर"]
             has_phonetic_english = any(w in text for w in phonetic_english_words)
             
-            if latin_chars > dev_chars or has_phonetic_english:
+            is_english = latin_chars > dev_chars or has_phonetic_english
+            
+            if is_english:
                 logger.info(f"Detected English input (Latin: {latin_chars}, Dev: {dev_chars}, Phonetic: {has_phonetic_english}). Switching TTS to en-IN-isha.")
                 session.tts.update_options(voice="en-IN-isha", locale="en-IN")
+                override = "\n\n[SYSTEM OVERRIDE: The user spoke in English. You MUST formulate your entire response in English (Latin script). If declining due to safety rules, you MUST use the English safety mandate exactly as written.]"
             else:
                 logger.info(f"Detected Hindi input (Latin: {latin_chars}, Dev: {dev_chars}). Switching TTS to hi-IN-sunaina.")
                 session.tts.update_options(voice="hi-IN-sunaina", locale="hi-IN")
+                override = "\n\n[SYSTEM OVERRIDE: The user spoke in Hindi. You MUST formulate your entire response in Hindi (Devanagari script). If declining due to safety rules, you MUST use the Hindi safety mandate exactly as written.]"
+                
+            # Inject prompt override into the message content directly
+            if hasattr(msg_obj, "content"):
+                if isinstance(msg_obj.content, str):
+                    msg_obj.content += override
+                elif isinstance(msg_obj.content, list):
+                    for c in reversed(msg_obj.content):
+                        if hasattr(c, "text"):
+                            c.text += override
+                            break
+                            
         except Exception as e:
             logger.warning(f"Error in dynamic language detection: {e}")
 
