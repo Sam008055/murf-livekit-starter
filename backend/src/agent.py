@@ -40,8 +40,9 @@ OBJECTIVES:
 2. Help farmers identify pests, soil prep requirements, and crop management practices.
 3. Automatically remember key facts about each farmer (crops grown, land size, district, irrigation type).
 
-KNOWLEDGE & RAG TOOL:
-- You have access to `search_agricultural_knowledge(query)` to search indexed agricultural documents (ICAR guidelines, PM-Kisan, KCC schemes, crop practices, pest control). ALWAYS call this tool when asked about farming guidelines, government schemes, or pest/disease solutions.
+KNOWLEDGE & RAG TOOL (STRICT & MANDATORY):
+- You have access to `search_agricultural_knowledge(query)` to search indexed official agricultural documents (ICAR guidelines, PM-Kisan, KCC schemes, crop practices, soil prep, pest/disease control).
+- MANDATORY RAG RULE: Whenever the user asks ANY question about farming, crops, soil, fertilizers, pests, diseases, government schemes, or agricultural management, YOU MUST ALWAYS CALL `search_agricultural_knowledge(query)` FIRST before formulating your answer. Ground your answer heavily and directly on the retrieved search results. Do NOT make up information or rely solely on general knowledge when official document context is available.
 
 MEMORY & FARMER FACTS TOOL:
 - You have access to `save_farmer_fact(key, value)` to persist facts in the farmer's profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'). Call this tool whenever the farmer reveals new details about their farm.
@@ -90,7 +91,7 @@ class Assistant(Agent):
     @property
     def current_farmer_id(self) -> str:
         if self.room and self.room.remote_participants:
-            part = list(self.room.remote_participants.values())[0]
+            part = next(iter(self.room.remote_participants.values()))
             return part.identity
         return "farmer_default"
 
@@ -117,11 +118,11 @@ class Assistant(Agent):
         description="Save or update a specific fact about the farmer to their permanent database profile (e.g. key='crop', value='Wheat'; key='land_size', value='5 acres'; key='district', value='Raigad'; key='irrigation', value='Drip')."
     )
     async def save_farmer_fact(
-        self, key: str, value: str, farmer_name: str = None
+        self, key: str, value: str, farmer_name: str | None = None
     ) -> str:
         """Save a new fact about the farmer."""
         fid = self.current_farmer_id
-        res = db.save_farmer_fact(fid, name=farmer_name, key=key, value=value)
+        db.save_farmer_fact(fid, name=farmer_name, key=key, value=value)
         logger.info(f"Saved farmer fact for {fid}: {key}={value}")
         return f"Successfully saved fact '{key}: {value}' to farmer profile memory."
 
@@ -190,22 +191,42 @@ async def my_agent(ctx: JobContext):
 
     await ctx.connect()
 
-    async def greet():
-        await asyncio.sleep(1.0)
-
-        remote_participants = list(ctx.room.remote_participants.values())
-        participant = remote_participants[0] if remote_participants else None
-        current_farmer_id = participant.identity if participant else "farmer_default"
-
+    async def greet(target_participant: rtc.RemoteParticipant | None = None):
+        participant = target_participant
         metadata = {}
-        if participant and participant.metadata:
-            try:
-                metadata = json.loads(participant.metadata)
-            except Exception:
-                pass
+
+        # Poll for up to 1.5s to ensure participant metadata payload is fully synchronized
+        for _attempt in range(15):
+            if not participant:
+                remote_participants = list(ctx.room.remote_participants.values())
+                participant = remote_participants[0] if remote_participants else None
+
+            if participant and participant.metadata:
+                try:
+                    parsed = json.loads(participant.metadata)
+                    if isinstance(parsed, dict) and parsed.get("name"):
+                        metadata = parsed
+                        break
+                except Exception:
+                    pass
+
+            if (
+                participant
+                and participant.name
+                and participant.name not in ["user", "Kisan", ""]
+            ):
+                break
+
+            await asyncio.sleep(0.1)
+
+        current_farmer_id = metadata.get("farmer_id") or (
+            participant.identity if participant else "farmer_default"
+        )
 
         farmer_name = metadata.get("name") or (
-            participant.name if participant and participant.name != "user" else None
+            participant.name
+            if participant and participant.name not in ["user", "Kisan"]
+            else None
         )
         district = metadata.get("district", "")
         crop = metadata.get("crop", "")
@@ -227,7 +248,13 @@ async def my_agent(ctx: JobContext):
         stored_crop = facts.get("crop")
         stored_district = facts.get("district")
 
-        if stored_name and stored_name != "Kisan" and not profile.get("is_new"):
+        is_valid_name = (
+            stored_name
+            and stored_name not in ["Kisan", "user", "farmer_default"]
+            and not stored_name.isdigit()
+        )
+
+        if is_valid_name and not profile.get("is_new"):
             details = []
             if stored_district:
                 details.append(f"{stored_district}")
@@ -235,24 +262,28 @@ async def my_agent(ctx: JobContext):
                 details.append(f"{stored_crop} की खेती")
             detail_str = f" ({', '.join(details)})" if details else ""
             greeting_text = f"नमस्ते {stored_name} जी{detail_str}! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
-        elif stored_name and stored_name != "Kisan":
+        elif is_valid_name:
             greeting_text = f"नमस्ते {stored_name} जी! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
         else:
             greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
 
+        logger.info(
+            f"Greeting participant {current_farmer_id} (Name: '{stored_name}'): {greeting_text}"
+        )
         session.say(greeting_text, allow_interruptions=True)
 
     background_tasks = set()
 
     if len(ctx.room.remote_participants) > 0:
-        task = asyncio.create_task(greet())
+        first_participant = next(iter(ctx.room.remote_participants.values()))
+        task = asyncio.create_task(greet(first_participant))
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
     else:
 
         @ctx.room.on("participant_connected")
         def on_participant_connected(participant: rtc.RemoteParticipant):
-            task = asyncio.create_task(greet())
+            task = asyncio.create_task(greet(participant))
             background_tasks.add(task)
             task.add_done_callback(background_tasks.discard)
 

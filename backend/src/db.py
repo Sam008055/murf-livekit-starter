@@ -40,7 +40,7 @@ def get_farmer(farmer_id: str) -> dict:
     if not row:
         return {
             "user_id": farmer_id,
-            "name": farmer_id if not farmer_id.startswith("caller_") else "Kisan",
+            "name": "Kisan",
             "language_preference": "hi-IN",
             "facts": {},
             "last_interaction": None,
@@ -52,9 +52,13 @@ def get_farmer(farmer_id: str) -> dict:
     except Exception:
         facts_dict = {}
 
+    db_name = row[1]
+    if not db_name or db_name.isdigit() or db_name == "user":
+        db_name = "Kisan"
+
     return {
         "user_id": row[0],
-        "name": row[1] or "Kisan",
+        "name": db_name,
         "language_preference": row[2] or "hi-IN",
         "facts": facts_dict,
         "last_interaction": row[4],
@@ -62,13 +66,17 @@ def get_farmer(farmer_id: str) -> dict:
     }
 
 
-def save_farmer_fact(farmer_id: str, name: str, key: str, value: str) -> dict:
+def save_farmer_fact(
+    farmer_id: str, key: str, value: str, name: str | None = None
+) -> dict:
     """Save or update a specific fact (e.g. crop, land size, district, irrigation) for a farmer."""
     farmer = get_farmer(farmer_id)
     facts = farmer["facts"]
     facts[key] = value
 
-    current_name = name if name and name != "Kisan" else farmer["name"]
+    current_name = (
+        name if (name and not name.isdigit() and name != "Kisan") else farmer["name"]
+    )
     now_str = datetime.utcnow().isoformat()
 
     conn = sqlite3.connect(DB_PATH)
@@ -104,7 +112,10 @@ def save_farmer_fact(farmer_id: str, name: str, key: str, value: str) -> dict:
 
 
 def update_farmer_profile(
-    farmer_id: str, name: str = None, language: str = None, facts_update: dict = None
+    farmer_id: str,
+    name: str | None = None,
+    language: str | None = None,
+    facts_update: dict | None = None,
 ) -> dict:
     """Update general farmer profile."""
     farmer = get_farmer(farmer_id)
@@ -112,7 +123,11 @@ def update_farmer_profile(
     if facts_update:
         facts.update(facts_update)
 
-    final_name = name or farmer["name"]
+    final_name = (
+        name
+        if (name and not name.isdigit() and name not in ["Kisan", "user"])
+        else farmer["name"]
+    )
     final_lang = language or farmer["language_preference"]
     now_str = datetime.utcnow().isoformat()
 
