@@ -30,6 +30,15 @@ export interface AgentChatTranscriptProps extends ComponentProps<'div'> {
   className?: string;
 }
 
+function cleanTranscriptMessage(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/(?:<)?function=\w+>(?:\s*\{[\s\S]*?\})?/gi, '')
+    .replace(/^(?:<)?function=\w+>/gim, '')
+    .replace(/^\s*\{"query":\s*"[^"]*"\}\s*/gim, '')
+    .trim();
+}
+
 /**
  * A chat transcript component that displays a conversation between the user and agent.
  * Shows messages with timestamps and origin indicators, plus a thinking indicator
@@ -56,6 +65,9 @@ export function AgentChatTranscript({
       <ConversationContent>
         {messages.map((receivedMessage) => {
           const { id, timestamp, from, message } = receivedMessage;
+          const cleanedMessage = cleanTranscriptMessage(message);
+          if (!cleanedMessage) return null;
+
           const locale = navigator?.language ?? 'en-US';
           const messageOrigin = from?.isLocal ? 'user' : 'assistant';
           const time = new Date(timestamp);
@@ -64,7 +76,7 @@ export function AgentChatTranscript({
           return (
             <Message key={id} title={title} from={messageOrigin}>
               <MessageContent>
-                <MessageResponse>{message}</MessageResponse>
+                <MessageResponse>{cleanedMessage}</MessageResponse>
               </MessageContent>
             </Message>
           );
