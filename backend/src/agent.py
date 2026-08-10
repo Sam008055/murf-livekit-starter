@@ -171,7 +171,7 @@ class Assistant(Agent):
         
         logger.info(f"Market price search requested: '{query}'")
         try:
-            from duckduckgo_search import DDGS
+            from ddgs import DDGS
             with DDGS() as ddgs:
                 results = [r for r in ddgs.text(query, max_results=3)]
                 
