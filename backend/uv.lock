@@ -18,6 +18,7 @@ dependencies = [
     { name = "livekit-plugins-noise-cancellation" },
     { name = "pinecone" },
     { name = "pinecone-plugin-assistant" },
+    { name = "pinecone-plugin-interface" },
     { name = "pypdf" },
     { name = "python-dotenv" },
     { name = "supabase" },
@@ -37,6 +38,7 @@ requires-dist = [
     { name = "livekit-plugins-noise-cancellation", specifier = "~=0.2" },
     { name = "pinecone", specifier = ">=9.1.0" },
     { name = "pinecone-plugin-assistant", specifier = ">=3.0.3" },
+    { name = "pinecone-plugin-interface", specifier = ">=0.0.7" },
     { name = "pypdf", specifier = ">=6.15.0" },
     { name = "python-dotenv" },
     { name = "supabase", specifier = ">=2.31.0" },
@@ -2307,6 +2309,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/95/b5/308758742255b072e633947f9c016f5bf12aab1f592b4f81968e98fdf36d/pinecone_plugin_assistant-3.0.3.tar.gz", hash = "sha256:53f548ede60a95d79ff48d7865a3d0afd665ced9e77758272e62ba0c6c63bd26", size = 151895, upload-time = "2026-03-27T22:13:41.008Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f6/0d/188293ade97616983cc6764d64867322dc40a4ee7009f21a1cf99f10149c/pinecone_plugin_assistant-3.0.3-py3-none-any.whl", hash = "sha256:a42cff1e0b28df40596e440527c41888881eefedb1008117819506db60273808", size = 280675, upload-time = "2026-03-27T22:13:42.292Z" },
+]
+
+[[package]]
+name = "pinecone-plugin-interface"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/fb/e8a4063264953ead9e2b24d9b390152c60f042c951c47f4592e9996e57ff/pinecone_plugin_interface-0.0.7.tar.gz", hash = "sha256:b8e6675e41847333aa13923cc44daa3f85676d7157324682dc1640588a982846", size = 3370, upload-time = "2024-06-05T01:57:52.093Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/1d/a21fdfcd6d022cb64cef5c2a29ee6691c6c103c4566b41646b080b7536a5/pinecone_plugin_interface-0.0.7-py3-none-any.whl", hash = "sha256:875857ad9c9fc8bbc074dbe780d187a2afd21f5bfe0f3b08601924a61ef1bba8", size = 6249, upload-time = "2024-06-05T01:57:50.583Z" },
 ]
 
 [[package]]
