@@ -16,8 +16,9 @@ from livekit.agents import (
     cli,
     llm,
     room_io,
+    tokenize,
 )
-from livekit.plugins import deepgram, murf, noise_cancellation, openai, silero
+from livekit.plugins import deepgram, murf, noise_cancellation, openai, silero, google
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 # Add backend/src to module path if needed
@@ -177,26 +178,24 @@ async def my_agent(ctx: JobContext):
         f"Starting agent for room '{ctx.room.name}' using Groq model '{groq_model}' and API key ending in {key_suffix}"
     )
 
-    # Set up voice AI pipeline using Murf Falcon, Gemini / Groq LLM, Deepgram, and LiveKit turn detector
+    # Set up voice AI pipeline using Murf, Gemini LLM, Deepgram, and LiveKit turn detector
     session = AgentSession(
         stt=deepgram.STT(
             model="nova-3",
             language="multi",
         ),
-        llm=openai.LLM(
-            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
-            base_url="https://api.groq.com/openai/v1",
-            api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            _strict_tool_schema=False,
+        llm=google.LLM(
+            model="gemini-3.5-flash-lite",
         ),
         tts=murf.TTS(
-            voice="hi-IN-sunaina",
-            locale="hi-IN",
-            style="Conversational",
+            voice="Anisha",  # do not hardcode the locale key
+            style="Conversation",
+            tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
+            text_pacing=True,
         ),
         vad=ctx.proc.userdata["vad"],
         turn_detection=MultilingualModel(),
-        preemptive_generation=False,
+        preemptive_generation=True,
     )
 
     await session.start(
@@ -371,58 +370,6 @@ async def my_agent(ctx: JobContext):
         else:
             reset_activity_timer()
 
-    @session.on("user_speech_committed")
-    def on_user_speech_committed(msg):
-        # Dynamically switch TTS voice based on detected language of user's speech
-        try:
-            # Handle if msg is a ChatContext
-            if hasattr(msg, "messages") and msg.messages:
-                msg_obj = msg.messages[-1]
-            else:
-                msg_obj = msg
-
-            if hasattr(msg_obj, "content"):
-                if isinstance(msg_obj.content, str):
-                    text = msg_obj.content
-                elif isinstance(msg_obj.content, list):
-                    text = " ".join([getattr(c, "text", "") for c in msg_obj.content])
-                else:
-                    text = str(msg_obj.content)
-            else:
-                text = str(msg_obj)
-
-            text = text.lower()
-
-            latin_chars = sum(1 for c in text if 'a' <= c <= 'z')
-            dev_chars = sum(1 for c in text if '\u0900' <= c <= '\u097F')
-            
-            # Common English phonetic words transcribed in Devanagari by STT
-            phonetic_english_words = ["कैन", "यू", "टेल", "मी", "व्हाट", "हाउ", "टु", "प्लीज", "एक्सप्लेन", "अबाउट", "इज", "देयर", "एनी", "व्हॉट", "फर्टिलाइजर"]
-            has_phonetic_english = any(w in text for w in phonetic_english_words)
-            
-            is_english = latin_chars > dev_chars or has_phonetic_english
-            
-            if is_english:
-                logger.info(f"Detected English input (Latin: {latin_chars}, Dev: {dev_chars}, Phonetic: {has_phonetic_english}). Switching TTS to en-IN-isha.")
-                session.tts.update_options(voice="en-IN-isha", locale="en-IN")
-                override = "\n\n(Language Directive: User spoke in English. Answer in English only using Latin script. Do not announce tool calls or search queries.)"
-            else:
-                logger.info(f"Detected Hindi input (Latin: {latin_chars}, Dev: {dev_chars}). Switching TTS to hi-IN-sunaina.")
-                session.tts.update_options(voice="hi-IN-sunaina", locale="hi-IN")
-                override = "\n\n(Language Directive: User spoke in Hindi. Answer in Hindi only using Devanagari script. Do not announce tool calls or search queries.)"
-
-            # Inject prompt override into the message content directly
-            if hasattr(msg_obj, "content"):
-                if isinstance(msg_obj.content, str):
-                    msg_obj.content += override
-                elif isinstance(msg_obj.content, list):
-                    for c in reversed(msg_obj.content):
-                        if hasattr(c, "text"):
-                            c.text += override
-                            break
-
-        except Exception as e:
-            logger.warning(f"Error in dynamic language detection: {e}")
 
     @session.on("agent_speech_committed")
     def on_agent_speech_committed(msg):
