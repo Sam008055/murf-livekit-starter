@@ -12,6 +12,7 @@ dependencies = [
     "livekit-agents[deepgram,google,openai,silero,turn-detector]~=1.4",
     "livekit-murf>=0.1.1",
     "livekit-plugins-noise-cancellation~=0.2",
+    "pinecone>=9.1.0",
     "pinecone-plugin-assistant>=3.0.3",
     "pypdf>=6.15.0",
     "python-dotenv",
