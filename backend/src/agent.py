@@ -56,10 +56,11 @@ MEMORY & FARMER FACTS TOOL:
 - MANDATORY CONSENT RULE: Before you save any new fact about the farmer, you MUST explicitly ask for their permission to remember it. For example: "May I remember that you grow Wheat to help you better next time?" If they say no, DO NOT save it. If they agree, call `save_farmer_fact`.
 - You have access to `get_farmer_memory()` to retrieve saved farmer facts.
 
-MARKET PRICE TOOL:
+MARKET PRICE & WEATHER TOOLS:
 - You have access to `get_market_price(crop_name, district, state)` to fetch real-time market prices from agricultural data sources.
-- Whenever a user asks for the price or "bhav" of a crop, first use `get_farmer_memory()` to check if you know their district/state. If you don't know it, ask them for their location or search broadly.
-- After fetching the price, clearly state the source or date if available, so the farmer knows it is real data. If no data is found, politely apologize and suggest checking local mandis.
+- You have access to `get_weather(location)` to get current weather conditions and forecasts for a district or city.
+- Whenever a user asks for prices, weather, or forecasts, first use `get_farmer_memory()` to check if you know their district/state. If you don't know it, ask them for their location.
+- After fetching data, clearly state the source or date if available, so the farmer knows it is real data. If no data is found, politely apologize.
 
 CRITICAL LANGUAGE SELECTION RULE (TOP PRIORITY):
 Speech-To-Text (STT) transcribes spoken English phonetically into Devanagari script. You MUST analyze the underlying spoken words, NOT just the script.
@@ -170,27 +171,53 @@ class Assistant(Agent):
         
         logger.info(f"Market price search requested: '{query}'")
         try:
-            url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                return "Failed to fetch market data. The portal might be down. Please politely apologize to the farmer."
-                
-            soup = BeautifulSoup(response.text, 'html.parser')
-            results = []
-            for a in soup.find_all('a', class_='result__snippet'):
-                results.append(a.text)
+            from duckduckgo_search import DDGS
+            with DDGS() as ddgs:
+                results = [r for r in ddgs.text(query, max_results=3)]
                 
             if not results:
                 return f"No recent market price data found for {crop_name} in {district}. Tell the farmer you couldn't find the latest data."
                 
-            snippets = "\n".join(results[:3])
+            snippets = "\n".join([r['body'] for r in results])
             return f"Here is the latest market data found:\n{snippets}\n\nExtract the price and inform the farmer in their language."
         except Exception as e:
             logger.error(f"Error fetching market price: {e}")
             return "An error occurred while fetching market data. Please politely apologize to the farmer."
+
+    @llm.function_tool(
+        description="Fetch current weather conditions and forecast for a specific district or city."
+    )
+    async def get_weather(self, location: str) -> str:
+        """Fetch real-time weather using wttr.in API."""
+        logger.info(f"Weather requested for: '{location}'")
+        try:
+            url = f"https://wttr.in/{urllib.parse.quote(location)}?format=j1"
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
+                return "Failed to fetch weather data. Please politely apologize to the farmer."
+            
+            data = response.json()
+            current = data['current_condition'][0]
+            temp_c = current['temp_C']
+            feels_like = current['FeelsLikeC']
+            humidity = current['humidity']
+            desc = current['weatherDesc'][0]['value']
+            
+            today = data['weather'][0]
+            max_temp = today['maxtempC']
+            min_temp = today['mintempC']
+            chance_of_rain = today['hourly'][0]['chanceofrain']
+            
+            weather_report = (
+                f"Current Weather in {location}: {desc}, {temp_c}°C (Feels like {feels_like}°C). "
+                f"Humidity: {humidity}%. "
+                f"Today's Forecast: High {max_temp}°C, Low {min_temp}°C. "
+                f"Rain chance: {chance_of_rain}%."
+            )
+            return weather_report
+        except Exception as e:
+            logger.error(f"Error fetching weather: {e}")
+            return "An error occurred while fetching weather data. Please politely apologize to the farmer."
 
     @llm.function_tool(
         description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye."
