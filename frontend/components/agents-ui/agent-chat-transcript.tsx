@@ -33,6 +33,10 @@ export interface AgentChatTranscriptProps extends ComponentProps<'div'> {
 function cleanTranscriptMessage(text: string): string {
   if (!text) return '';
   return text
+    .replace(/<function[^>]*>/gi, '')
+    .replace(/<\/function>/gi, '')
+    .replace(/<tool_call[^>]*>/gi, '')
+    .replace(/<\/tool_call>/gi, '')
     .replace(/(?:<)?function=\w+>(?:\s*\{[\s\S]*?\})?/gi, '')
     .replace(/^(?:<)?function=\w+>/gim, '')
     .replace(/^\s*\{"query":\s*"[^"]*"\}\s*/gim, '')

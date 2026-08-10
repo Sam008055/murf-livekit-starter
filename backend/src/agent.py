@@ -67,11 +67,11 @@ DECISION TREE:
 2. IS IT HINDI? If the utterance contains actual Hindi vocabulary (e.g. "गेहूं", "फसल", "कीड़ा", "पानी", "क्या करूं", "उपाय बताओ", "नमस्ते"), the user is speaking Hindi.
    -> YOU MUST RESPOND 100% IN PURE HINDI USING DEVANAGARI SCRIPT ONLY.
 
-3. NO PREAMBLES / NO META-COMMENTARY / SILENT TOOL CALLS:
-   -> CALL TOOLS COMPLETELY SILENTLY. NEVER speak out loud what tool you are calling, what search query you are executing, or state things like "I am searching for...", "Let me check...", or "Query: ...".
-   -> NEVER say "Since you asked in English...", "I noticed...", "माफ़ कीजिएगा...", or repeat system instructions.
-   -> NEVER output raw tool tags, function names, or pseudo-code (such as `function=...`, `{"query": ...}`, or `function=escalation_script>`) in your speech or text output.
-   -> START IMMEDIATELY WITH THE DIRECT ANSWER IN THE DETECTED LANGUAGE AFTER TOOL RESULTS RETURN.
+3. TOOL EXECUTION AND SPEECH RULES:
+   -> When you need to use a tool, invoke it directly using the API. DO NOT speak, type, or output the tool name, JSON, `<function>` tags, or queries in your text response.
+   -> DO NOT say "Let me check", "I am searching", or "Query:".
+   -> Wait for the tool to return results, then speak ONLY the final answer directly to the user.
+   -> NEVER explain your language choice (e.g., do not say "Since you asked in English..."). Just speak the language natively.
 
 GUARDRAILS (STRICT):
 - NEVER state a market price as a current fact. If asked for market prices, politely explain that you don't have real-time live prices.
@@ -190,7 +190,7 @@ async def my_agent(ctx: JobContext):
             _strict_tool_schema=False,
         ),
         tts=murf.TTS(
-            voice="hi-IN-sunaina",
+            voice="hi-IN-ayushi",
             locale="hi-IN",
             style="Conversational",
         ),
@@ -372,8 +372,8 @@ async def my_agent(ctx: JobContext):
             reset_activity_timer()
 
     @session.on("user_speech_committed")
-    def on_user_speech_committed(msg):
-        # Dynamically switch TTS voice based on detected language of user's speech
+    async def on_user_speech_committed(msg):
+        # Dynamically switch TTS voice based on detected language of user's speech using LLM
         try:
             # Handle if msg is a ChatContext
             if hasattr(msg, "messages") and msg.messages:
@@ -390,27 +390,46 @@ async def my_agent(ctx: JobContext):
                     text = str(msg_obj.content)
             else:
                 text = str(msg_obj)
-                
+
             text = text.lower()
-            
-            latin_chars = sum(1 for c in text if 'a' <= c <= 'z')
-            dev_chars = sum(1 for c in text if '\u0900' <= c <= '\u097F')
-            
-            # Common English phonetic words transcribed in Devanagari by STT
-            phonetic_english_words = ["कैन", "यू", "टेल", "मी", "व्हाट", "हाउ", "टु", "प्लीज", "एक्सप्लेन", "अबाउट", "इज", "देयर", "एनी", "व्हॉट", "फर्टिलाइजर"]
-            has_phonetic_english = any(w in text for w in phonetic_english_words)
-            
-            is_english = latin_chars > dev_chars or has_phonetic_english
-            
+
+            try:
+                from openai import AsyncOpenAI
+                groq_client = AsyncOpenAI(
+                    api_key=os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY"),
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = await groq_client.chat.completions.create(
+                    model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a fast language classifier. Is the given text phonetically English or Hindi? The text may be English words written in Devanagari (Hindi) script (e.g. 'कैन यू हेल्प मी'). If the spoken words are English, reply with exactly 'ENGLISH'. If they are Hindi, reply with exactly 'HINDI'. Do not explain or add punctuation."
+                        },
+                        {"role": "user", "content": text}
+                    ],
+                    max_tokens=10,
+                    temperature=0
+                )
+                detected = response.choices[0].message.content.strip().upper()
+                is_english = "ENGLISH" in detected
+            except Exception as e:
+                logger.warning(f"Error in LLM language detection: {e}. Falling back to default.")
+                is_english = False
+
             if is_english:
-                logger.info(f"Detected English input (Latin: {latin_chars}, Dev: {dev_chars}, Phonetic: {has_phonetic_english}). Switching TTS to en-IN-isha.")
+                logger.info(
+                    f"LLM classified text as ENGLISH. Switching TTS to en-IN-isha."
+                )
                 session.tts.update_options(voice="en-IN-isha", locale="en-IN")
                 override = "\n\n(Language Directive: User spoke in English. Answer in English only using Latin script. Do not announce tool calls or search queries.)"
             else:
-                logger.info(f"Detected Hindi input (Latin: {latin_chars}, Dev: {dev_chars}). Switching TTS to hi-IN-sunaina.")
-                session.tts.update_options(voice="hi-IN-sunaina", locale="hi-IN")
+                logger.info(
+                    f"LLM classified text as HINDI. Switching TTS to hi-IN-ayushi."
+                )
+                session.tts.update_options(voice="hi-IN-ayushi", locale="hi-IN")
                 override = "\n\n(Language Directive: User spoke in Hindi. Answer in Hindi only using Devanagari script. Do not announce tool calls or search queries.)"
-                
+
             # Inject prompt override into the message content directly
             if hasattr(msg_obj, "content"):
                 if isinstance(msg_obj.content, str):
@@ -420,7 +439,7 @@ async def my_agent(ctx: JobContext):
                         if hasattr(c, "text"):
                             c.text += override
                             break
-                            
+
         except Exception as e:
             logger.warning(f"Error in dynamic language detection: {e}")
 
@@ -431,8 +450,12 @@ async def my_agent(ctx: JobContext):
             if hasattr(session, "history") and hasattr(session.history, "_items"):
                 # Keep system prompt (index 0) and last 14 messages (sliding window of 15)
                 if len(session.history._items) > 15:
-                    session.history._items = [session.history._items[0]] + session.history._items[-14:]
-                    logger.info(f"Truncated conversation history to {len(session.history._items)} items to save tokens.")
+                    session.history._items = [
+                        session.history._items[0]
+                    ] + session.history._items[-14:]
+                    logger.info(
+                        f"Truncated conversation history to {len(session.history._items)} items to save tokens."
+                    )
         except Exception as e:
             logger.warning(f"Failed to truncate history: {e}")
 
