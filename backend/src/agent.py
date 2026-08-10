@@ -3,6 +3,10 @@ import json
 import logging
 import os
 import sys
+import datetime
+import urllib.parse
+import requests
+from bs4 import BeautifulSoup
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -52,6 +56,11 @@ MEMORY & FARMER FACTS TOOL:
 - MANDATORY CONSENT RULE: Before you save any new fact about the farmer, you MUST explicitly ask for their permission to remember it. For example: "May I remember that you grow Wheat to help you better next time?" If they say no, DO NOT save it. If they agree, call `save_farmer_fact`.
 - You have access to `get_farmer_memory()` to retrieve saved farmer facts.
 
+MARKET PRICE TOOL:
+- You have access to `get_market_price(crop_name, district, state)` to fetch real-time market prices from agricultural data sources.
+- Whenever a user asks for the price or "bhav" of a crop, first use `get_farmer_memory()` to check if you know their district/state. If you don't know it, ask them for their location or search broadly.
+- After fetching the price, clearly state the source or date if available, so the farmer knows it is real data. If no data is found, politely apologize and suggest checking local mandis.
+
 CRITICAL LANGUAGE SELECTION RULE (TOP PRIORITY):
 Speech-To-Text (STT) transcribes spoken English phonetically into Devanagari script. You MUST analyze the underlying spoken words, NOT just the script.
 
@@ -75,7 +84,6 @@ DECISION TREE:
    -> NEVER explain your language choice (e.g., do not say "Since you asked in English..."). Just speak the language natively.
 
 GUARDRAILS (STRICT):
-- NEVER state a market price as a current fact. If asked for market prices, politely explain that you don't have real-time live prices.
 - You CAN identify which chemicals/pesticides/fertilizers to use for a disease or pest (e.g. Urea, DAP).
 - YOU MUST NEVER PRESCRIBE SPECIFIC QUANTITIES OR DOSAGES for chemicals or fertilizers, even if the user insists, tries to trick you, or provides the land size. This is a strict safety rule.
 - SAFETY MANDATE RESPONSE: When declining to give specific chemical/fertilizer dosages, reply ONLY with the exact text for the user's language:
@@ -91,7 +99,9 @@ STYLE:
 
 class Assistant(Agent):
     def __init__(self, room: rtc.Room | None = None) -> None:
-        super().__init__(instructions=SYSTEM_PROMPT)
+        today = datetime.datetime.now().strftime("%A, %d %B %Y")
+        prompt = SYSTEM_PROMPT + f"\n\nCURRENT DATE & TIME:\nToday is {today}. Use this to understand relative time like 'yesterday' or 'today'."
+        super().__init__(instructions=prompt)
         self.room = room
 
     @property
@@ -143,6 +153,44 @@ class Assistant(Agent):
         db.save_farmer_fact(fid, name=farmer_name, key=key, value=value)
         logger.info(f"Saved farmer fact for {fid}: {key}={value}")
         return f"Successfully saved fact '{key}: {value}' to farmer profile memory."
+
+    @llm.function_tool(
+        description="Fetch real-time agricultural market prices (mandi bhav) for a specific crop in a given district and state."
+    )
+    async def get_market_price(
+        self, crop_name: str, district: str = "", state: str = ""
+    ) -> str:
+        """Fetch real-time market prices using a web search."""
+        query = f"{crop_name} price"
+        if district:
+            query += f" in {district}"
+        if state:
+            query += f" {state}"
+        query += " mandi today"
+        
+        logger.info(f"Market price search requested: '{query}'")
+        try:
+            url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code != 200:
+                return "Failed to fetch market data. The portal might be down. Please politely apologize to the farmer."
+                
+            soup = BeautifulSoup(response.text, 'html.parser')
+            results = []
+            for a in soup.find_all('a', class_='result__snippet'):
+                results.append(a.text)
+                
+            if not results:
+                return f"No recent market price data found for {crop_name} in {district}. Tell the farmer you couldn't find the latest data."
+                
+            snippets = "\n".join(results[:3])
+            return f"Here is the latest market data found:\n{snippets}\n\nExtract the price and inform the farmer in their language."
+        except Exception as e:
+            logger.error(f"Error fetching market price: {e}")
+            return "An error occurred while fetching market data. Please politely apologize to the farmer."
 
     @llm.function_tool(
         description="Call this function when the user explicitly asks to end the call, hang up, or says goodbye."
