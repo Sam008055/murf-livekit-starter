@@ -67,6 +67,24 @@ async def initiate_sip_call():
     
     lk_api = api.LiveKitAPI()
     try:
+        # 1. Create the room explicitly
+        await lk_api.room.create_room(api.CreateRoomRequest(name=ROOM_NAME))
+        print(f"✅ Room '{ROOM_NAME}' created/verified.")
+        
+        # 2. Explicitly dispatch the agent to the room
+        try:
+            await lk_api.agent_dispatch.create_dispatch(
+                api.CreateAgentDispatchRequest(
+                    agent_name="my-agent",
+                    room=ROOM_NAME
+                )
+            )
+            print("✅ Agent 'my-agent' explicitly dispatched.")
+        except Exception as e:
+            # Dispatch might already exist or auto-dispatch might be handling it, but we log the error just in case
+            print(f"⚠️ Note on agent dispatch: {e}")
+
+        # 3. Create the SIP participant to call the user
         participant = await lk_api.sip.create_sip_participant(
             sip.CreateSIPParticipantRequest(
                 room_name=ROOM_NAME,
