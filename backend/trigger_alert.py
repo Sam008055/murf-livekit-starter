@@ -71,7 +71,7 @@ async def initiate_sip_call():
             sip.CreateSIPParticipantRequest(
                 room_name=ROOM_NAME,
                 sip_call_to=sip_call_to,
-                trunk_id=sip_trunk_id,
+                sip_trunk_id=sip_trunk_id,
                 sip_number=twilio_phone_number, # The caller ID
                 participant_identity=f"sip-farmer-{sip_call_to}",
                 participant_name="Farmer"
