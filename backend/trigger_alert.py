@@ -22,7 +22,8 @@ async def check_weather_and_call():
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://wttr.in/{CITY}?format=j1") as response:
                 if response.status == 200:
-                    data = await response.json()
+                    # wttr.in often returns text/plain even for JSON, so we bypass content-type validation
+                    data = await response.json(content_type=None)
                     current_condition = data['current_condition'][0]['weatherDesc'][0]['value'].lower()
                     print(f"Current weather in {CITY}: {current_condition}")
                     
