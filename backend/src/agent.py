@@ -362,19 +362,23 @@ async def my_agent(ctx: JobContext):
             and not stored_name.isdigit()
         )
 
-        if is_valid_name and is_returning:
-            if stored_district and stored_crop:
-                greeting_text = f"नमस्ते {stored_name} जी! {stored_district} में {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
-            elif stored_district:
-                greeting_text = f"नमस्ते {stored_name} जी! {stored_district} से खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
-            elif stored_crop:
-                greeting_text = f"नमस्ते {stored_name} जी! {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
-            else:
-                greeting_text = f"नमस्ते {stored_name} जी! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
-        elif is_valid_name:
-            greeting_text = f"नमस्ते {stored_name} जी! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+        if ctx.room.name == "outbound-emergency":
+            # Data-driven emergency alert greeting
+            greeting_text = "नमस्ते! मैं खेतीफाई से बोल रही हूँ। यह एक महत्वपूर्ण अलर्ट है। करनाल में अभी भारी बारिश और तूफान की चेतावनी है, और बासमती धान का मंडी भाव ३,३५५ रुपये प्रति क्विंटल चल रहा है। मौसम खराब होने से पहले, क्या आप अपनी फसल सुरक्षित करने या मंडी में बेचने के बारे में कोई जानकारी चाहते हैं?"
         else:
-            greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+            if is_valid_name and is_returning:
+                if stored_district and stored_crop:
+                    greeting_text = f"नमस्ते {stored_name} जी! {stored_district} में {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+                elif stored_district:
+                    greeting_text = f"नमस्ते {stored_name} जी! {stored_district} से खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+                elif stored_crop:
+                    greeting_text = f"नमस्ते {stored_name} जी! {stored_crop} की खेती के लिए खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+                else:
+                    greeting_text = f"नमस्ते {stored_name} जी! खेतीफाई में आपका पुनः स्वागत है। आज मैं आपकी क्या मदद कर सकती हूँ?"
+            elif is_valid_name:
+                greeting_text = f"नमस्ते {stored_name} जी! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
+            else:
+                greeting_text = "नमस्ते! मैं खेतीफाई से आपकी डिजिटल कृषि सहायक हूँ। आज मैं आपकी खेती या फसल से जुड़ी क्या मदद कर सकती हूँ?"
 
         logger.info(
             f"Greeting participant {current_farmer_id} (Name: '{stored_name}'): {greeting_text}"
