@@ -318,6 +318,25 @@ async def my_agent(ctx: JobContext):
 
             await asyncio.sleep(0.1)
 
+        # For SIP participants, wait until their audio track is subscribed (meaning they picked up)
+        if participant and participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_SIP:
+            logger.info("Waiting for SIP participant to answer (audio track subscribed)...")
+            
+            def has_subscribed_audio_track():
+                for pub in participant.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO and pub.subscribed:
+                        return True
+                return False
+
+            # Wait up to 60 seconds for the user to answer
+            for _ in range(600):
+                if has_subscribed_audio_track():
+                    logger.info("SIP participant answered the call.")
+                    # Add a small delay after pickup for a more natural feel
+                    await asyncio.sleep(1.0)
+                    break
+                await asyncio.sleep(0.1)
+
         farmer_name = metadata.get("name") or (
             participant.name
             if participant and participant.name not in ["user", "Kisan"]
